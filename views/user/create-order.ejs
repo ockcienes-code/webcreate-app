@@ -4,27 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yeni Sipariş - WebCreate</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto:wght@400;700&family=Lora:ital@1&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/animations.css">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <style>
+        #live-preview { transition: all 0.5s ease-in-out; }
+        .color-picker-wrapper { display: flex; align-items: center; gap: 10px; }
+        .color-picker-wrapper input[type="color"] { border: none; width: 40px; height: 40px; border-radius: 5px; cursor: pointer; }
+        #preview-logo { max-width: 150px; max-height: 50px; object-fit: contain; }
+    </style>
 </head>
 <body>
-    <% if (user) { %>
-        <% if (user.role === 'admin') { %>
-            <%- include('../partials/admin-header') %>
-        <% } else { %>
-            <%- include('../partials/user-header') %>
-        <% } %>
-    <% } else { %>
-        <%- include('../partials/header') %>
-    <% } %>
+    <%- include('../partials/user-header') %>
 
     <main class="container" style="min-height: 80vh; padding: 2rem 0;">
         <div class="animate-fade-in">
             <div style="text-align: center; margin-bottom: 2rem;">
-                <h1 style="color: var(--white); margin-bottom: 0.5rem;">Yeni Web Sitesi Siparişi</h1>
-                <p style="color: #ccc;">Hayalinizdeki web sitesini oluşturmak için ilk adımı atın</p>
+                <h1 style="color: var(--white);">Yeni Web Sitesi Siparişi</h1>
+                <p style="color: #ccc;">Sitenizi canlı olarak tasarlayın ve siparişinizi oluşturun</p>
             </div>
 
             <form action="/orders/create" method="POST" enctype="multipart/form-data" data-validate>
@@ -32,67 +30,73 @@
                     
                     <div class="col" style="flex: 2;">
                         <div class="card">
-                            <h3 style="color: var(--white); margin-bottom: 1.5rem;">📋 Sipariş Bilgileri</h3>
+                            <h3 style="color: var(--white);">1. Temel Bilgiler</h3>
                             <div class="form-group">
-                                <label for="title" class="form-label">Sipariş Başlığı</label>
-                                <input type="text" id="title" name="title" class="form-control" required placeholder="Örn: E-ticaret Sitesi, Blog Sitesi vb.">
+                                <label for="title" class="form-label">Site Başlığı / Marka Adı</label>
+                                <input type="text" id="title" name="title" class="form-control" required placeholder="Örn: Enes Ocakçı Photography">
                             </div>
                             <div class="form-group">
-                                <label for="description" class="form-label">Detaylı Açıklama</label>
-                                <textarea id="description" name="description" class="form-control" required placeholder="İstediğiniz özellikleri, sayfaları, renkleri ve diğer detayları yazın..." rows="8"></textarea>
+                                <label for="description" class="form-label">Site Hakkında (Anasayfa İçeriği)</label>
+                                <textarea id="description" name="description" class="form-control" required placeholder="Sitenizin anasayfasında yer alacak ana metin..." rows="6"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="logo" class="form-label">Logo Yükle</label>
+                                <input type="file" id="logo" name="logo" class="form-control" accept="image/*">
                             </div>
                         </div>
 
                         <div class="card">
-                            <h3 style="color: var(--white); margin-bottom: 1.5rem;">🎨 Tasarım Seçenekleri</h3>
-                            <div class="form-group">
-                                <label for="layout" class="form-label">Sayfa Düzeni</label>
-                                <select id="layout" name="layout" class="form-control">
-                                    <option value="modern">Modern ve Minimalist</option>
-                                    <option value="corporate">Kurumsal ve Ciddi</option>
-                                    <option value="creative">Yaratıcı ve Sanatsal</option>
+                            <h3 style="color: var(--white);">2. Tasarım & Stil</h3>
+                             <div class="form-group">
+                                <label for="layout" class="form-label">Tema Stili</label>
+                                <select id="layout" name="designDetails[layout]" class="form-control">
+                                    <option value="modern">Modern & Temiz</option>
+                                    <option value="corporate">Kurumsal & Profesyonel</option>
+                                    <option value="dark-elegant">Koyu & Zarif</option>
+                                    <option value="vibrant">Canlı & Yaratıcı</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="colorPalette" class="form-label">Renk Paleti</label>
-                                <select id="colorPalette" name="colorPalette" class="form-control">
-                                    <option value="blue">Mavi Tonları (Güvenilir)</option>
-                                    <option value="dark">Koyu Tema (Modern)</option>
-                                    <option value="light">Açık Tema (Klasik)</option>
-                                    <option value="green">Yeşil Tonları (Doğal)</option>
+                                <label for="font" class="form-label">Yazı Tipi</label>
+                                <select id="font" name="designDetails[font]" class="form-control">
+                                    <option value="Roboto">Roboto (Modern)</option>
+                                    <option value="Lora">Lora (Serif, Klasik)</option>
+                                    <option value="Playfair Display">Playfair Display (Zarif)</option>
+                                    <option value="Inter">Inter (Okunaklı)</option>
                                 </select>
                             </div>
-                        </div>
-
-                        <div class="card">
-                            <h3 style="color: var(--white); margin-bottom: 1.5rem;">📎 Dosya Yükleme</h3>
-                            <div class="file-upload" onclick="document.getElementById('files').click()">
-                                <div style="font-size: 3rem; margin-bottom: 1rem;">📁</div>
-                                <h4 style="color: var(--white);">Dosyaları Buraya Sürükleyin veya Tıklayın</h4>
-                                <input type="file" id="files" name="files" multiple style="display: none;">
+                             <div class="form-group">
+                                <label class="form-label">Renk Paleti</label>
+                                <div class="color-picker-wrapper">
+                                    <label for="primaryColor">Ana Renk:</label>
+                                    <input type="color" id="primaryColor" name="designDetails[primaryColor]" value="#007bff">
+                                    <label for="secondaryColor">Arkaplan Rengi:</label>
+                                    <input type="color" id="secondaryColor" name="designDetails[secondaryColor]" value="#ffffff">
+                                </div>
                             </div>
-                            <div id="filePreview" style="margin-top: 1rem;"></div>
                         </div>
                     </div>
 
                     <div class="col" style="flex: 1; position: sticky; top: 2rem;">
                         <div class="card">
-                            <h3 style="color: var(--white); margin-bottom: 1.5rem;">👁️ Canlı Önizleme</h3>
-                            <div id="live-preview" style="background: #fff; border-radius: 8px; padding: 10px; min-height: 400px; transition: all 0.3s ease;">
-                                <div id="preview-header" style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">
-                                    <h4 id="preview-title" style="color: #333; font-size: 1.2em;">Başlık</h4>
-                                </div>
-                                <div id="preview-content" style="padding: 20px;">
-                                    <p id="preview-description" style="color: #555; font-size: 0.9em; line-height: 1.6;">Açıklama...</p>
-                                </div>
+                            <h3 style="color: var(--white);">Canlı Önizleme</h3>
+                            <div id="live-preview" style="border: 1px solid var(--light-gray); border-radius: 8px; min-height: 450px; overflow: hidden;">
+                                <header id="preview-header" style="padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;">
+                                    <img id="preview-logo" src="" alt="logo" style="display: none;">
+                                    <h4 id="preview-title" style="font-size: 1.5em; margin: 0;">Site Başlığı</h4>
+                                    <nav> <a href="#" class="preview-link">Menü</a> </nav>
+                                </header>
+                                <section id="preview-content" style="padding: 30px 20px;">
+                                    <h1 id="preview-main-heading" style="font-size: 2em; margin-bottom: 15px;">Ana Başlık</h1>
+                                    <p id="preview-description" style="font-size: 1em; line-height: 1.6;">...</p>
+                                </section>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                    <a href="/user/orders" class="btn btn-outline" style="flex: 1;">← İptal Et</a>
-                    <button type="submit" class="btn hover-lift" style="flex: 2;">🚀 Siparişi Oluştur ve Gönder</button>
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button type="submit" class="btn hover-lift" style="font-size: 1.2rem; padding: 0.8rem 2rem;">🚀 Siparişi Oluştur</button>
                 </div>
             </form>
         </div>
@@ -101,61 +105,102 @@
     <%- include('../partials/footer') %>
     <script src="/js/main.js"></script>
     <script>
-        // Form elemanlarını seç
-        const titleInput = document.getElementById('title');
-        const descriptionInput = document.getElementById('description');
-        const layoutSelect = document.getElementById('layout');
-        const colorSelect = document.getElementById('colorPalette');
+        document.addEventListener('DOMContentLoaded', function() {
+            // Form elemanları
+            const titleInput = document.getElementById('title');
+            const descriptionInput = document.getElementById('description');
+            const layoutSelect = document.getElementById('layout');
+            const fontSelect = document.getElementById('font');
+            const primaryColorPicker = document.getElementById('primaryColor');
+            const secondaryColorPicker = document.getElementById('secondaryColor');
+            const logoInput = document.getElementById('logo');
 
-        // Önizleme elemanlarını seç
-        const previewTitle = document.getElementById('preview-title');
-        const previewDescription = document.getElementById('preview-description');
-        const livePreview = document.getElementById('live-preview');
-        const previewHeader = document.getElementById('preview-header');
+            // Önizleme elemanları
+            const preview = document.getElementById('live-preview');
+            const previewHeader = document.getElementById('preview-header');
+            const previewTitle = document.getElementById('preview-title');
+            const previewLogo = document.getElementById('preview-logo');
+            const previewContent = document.getElementById('preview-content');
+            const previewMainHeading = document.getElementById('preview-main-heading');
+            const previewDescription = document.getElementById('preview-description');
+            const previewLink = document.querySelector('.preview-link');
 
-        // Renk paletleri
-        const colorPalettes = {
-            blue: { bg: '#F0F8FF', header: '#E6F2FF', title: '#005A9C', text: '#333' },
-            dark: { bg: '#2c3e50', header: '#34495e', title: '#ecf0f1', text: '#bdc3c7' },
-            light: { bg: '#ffffff', header: '#f8f9fa', title: '#212529', text: '#495057' },
-            green: { bg: '#F0FFF0', header: '#E6F8E6', title: '#2E8B57', text: '#333' }
-        };
+            function updatePreview() {
+                // Metinleri güncelle
+                const siteTitle = titleInput.value || 'Site Başlığı';
+                previewTitle.textContent = siteTitle;
+                previewMainHeading.textContent = siteTitle;
+                previewDescription.textContent = descriptionInput.value || 'Sitenizin ana sayfasında yer alacak ilgi çekici içerik burada olacak.';
 
-        // Güncelleme fonksiyonu
-        function updatePreview() {
-            // Başlık ve Açıklama
-            previewTitle.textContent = titleInput.value || 'Başlık';
-            previewDescription.textContent = descriptionInput.value || 'Açıklama...';
-            
-            // Renkler
-            const selectedPalette = colorPalettes[colorSelect.value];
-            livePreview.style.background = selectedPalette.bg;
-            previewHeader.style.background = selectedPalette.header;
-            previewTitle.style.color = selectedPalette.title;
-            previewDescription.style.color = selectedPalette.text;
+                // Renkleri güncelle
+                const primaryColor = primaryColorPicker.value;
+                const secondaryColor = secondaryColorPicker.value;
+                const isDark = isColorDark(secondaryColor);
+                const textColor = isDark ? '#ffffff' : '#333333';
 
-            // Düzen
-            if (layoutSelect.value === 'corporate') {
-                livePreview.style.fontFamily = 'Georgia, serif';
-                previewTitle.style.textAlign = 'left';
-            } else if (layoutSelect.value === 'creative') {
-                livePreview.style.fontFamily = 'cursive';
-                previewTitle.style.fontStyle = 'italic';
-            } else { // Modern
-                livePreview.style.fontFamily = 'Inter, sans-serif';
-                previewTitle.style.textAlign = 'center';
-                previewTitle.style.fontStyle = 'normal';
+                preview.style.backgroundColor = secondaryColor;
+                previewHeader.style.borderBottom = `1px solid ${isDark ? '#555' : '#eee'}`;
+                [previewTitle, previewMainHeading, previewDescription, previewLink].forEach(el => el.style.color = textColor);
+                previewTitle.style.color = primaryColor;
+                previewLink.style.borderColor = primaryColor;
+
+
+                // Fontu güncelle
+                const selectedFont = fontSelect.value;
+                preview.style.fontFamily = `'${selectedFont}', sans-serif`;
+
+                // Tema/Layout Güncelle
+                switch(layoutSelect.value) {
+                    case 'corporate':
+                        previewHeader.style.justifyContent = 'flex-start';
+                        previewTitle.style.fontSize = '1.3em';
+                        break;
+                    case 'dark-elegant':
+                        if(secondaryColorPicker.value === '#ffffff') secondaryColorPicker.value = '#1a1a1a';
+                        if(primaryColorPicker.value === '#007bff') primaryColorPicker.value = '#f1c40f';
+                        break;
+                    case 'vibrant':
+                         if(primaryColorPicker.value === '#007bff') primaryColorPicker.value = '#e74c3c';
+                        break;
+                    case 'modern':
+                    default:
+                        previewHeader.style.justifyContent = 'space-between';
+                        previewTitle.style.fontSize = '1.5em';
+                        break;
+                }
             }
-        }
+            
+            // Logo Yükleme
+            logoInput.addEventListener('change', function(e) {
+                if (e.target.files && e.target.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        previewLogo.src = event.target.result;
+                        previewLogo.style.display = 'block';
+                        previewTitle.style.display = 'none'; // Logo varken başlığı gizle
+                    }
+                    reader.readAsDataURL(e.target.files[0]);
+                }
+            });
 
-        // Event listener'ları ekle
-        titleInput.addEventListener('input', updatePreview);
-        descriptionInput.addEventListener('input', updatePreview);
-        layoutSelect.addEventListener('change', updatePreview);
-        colorSelect.addEventListener('change', updatePreview);
+            // Renk parlaklığını kontrol et
+            function isColorDark(hexcolor){
+                const r = parseInt(hexcolor.substr(1, 2), 16);
+                const g = parseInt(hexcolor.substr(3, 2), 16);
+                const b = parseInt(hexcolor.substr(5, 2), 16);
+                const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+                return yiq < 128;
+            }
 
-        // İlk yüklemede çalıştır
-        updatePreview();
+            // Tüm inputlara event listener ekle
+            [titleInput, descriptionInput, layoutSelect, fontSelect, primaryColorPicker, secondaryColorPicker].forEach(el => {
+                el.addEventListener('input', updatePreview);
+                el.addEventListener('change', updatePreview);
+            });
+
+            // İlk yüklemede çalıştır
+            updatePreview();
+        });
     </script>
 </body>
 </html>

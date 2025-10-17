@@ -72,8 +72,8 @@ function updateAdminStats() {
     setInterval(async () => {
         try {
             const response = await fetch('/admin/dashboard/stats');
+            if (!response.ok) return; // Hata durumunda sessiz kal
             const data = await response.json();
-            
             updateAdminStatCards(data);
         } catch (error) {
             console.error('Admin istatistik güncelleme hatası:', error);
@@ -83,22 +83,16 @@ function updateAdminStats() {
 
 function updateAdminStatCards(stats) {
     const statElements = {
-        'totalUsers': document.querySelector('[data-stat="users"]'),
-        'totalOrders': document.querySelector('[data-stat="orders"]'),
-        'totalMessages': document.querySelector('[data-stat="messages"]'),
-        'pendingRevisions': document.querySelector('[data-stat="revisions"]')
+        'users': document.querySelector('[data-stat="users"] .stat-number'),
+        'orders': document.querySelector('[data-stat="orders"] .stat-number'),
+        'messages': document.querySelector('[data-stat="messages"] .stat-number'),
+        'revisions': document.querySelector('[data-stat="revisions"] .stat-number')
     };
     
-    Object.keys(statElements).forEach(statKey => {
-        if (statElements[statKey]) {
-            const currentValue = parseInt(statElements[statKey].textContent);
-            const newValue = stats[statKey];
-            
-            if (currentValue !== newValue) {
-                animateValue(statElements[statKey], currentValue, newValue, 1000);
-            }
-        }
-    });
+    if (stats.totalUsers !== undefined && statElements.users) statElements.users.textContent = stats.totalUsers;
+    if (stats.totalOrders !== undefined && statElements.orders) statElements.orders.textContent = stats.totalOrders;
+    if (stats.totalMessages !== undefined && statElements.messages) statElements.messages.textContent = stats.totalMessages;
+    if (stats.pendingRevisions !== undefined && statElements.revisions) statElements.revisions.textContent = stats.pendingRevisions;
 }
 
 // Sistem izleme
@@ -113,8 +107,8 @@ function initSystemMonitoring() {
 async function checkSystemHealth() {
     try {
         const response = await fetch('/admin/system/health');
+        if (!response.ok) return;
         const data = await response.json();
-        
         updateHealthIndicators(data);
     } catch (error) {
         console.error('Sistem sağlık kontrolü hatası:', error);
@@ -134,9 +128,18 @@ function updateHealthIndicators(healthData) {
             const status = healthData[key].status;
             indicators[key].className = `health-indicator ${status}`;
             indicators[key].title = healthData[key].message;
+            indicators[key].textContent = status === 'healthy' ? '🟢' : '🔴';
         }
     });
 }
+    
+    Object.keys(indicators).forEach(key => {
+        if (indicators[key] && healthData[key]) {
+            const status = healthData[key].status;
+            indicators[key].className = `health-indicator ${status}`;
+            indicators[key].title = healthData[key].message;
+        }
+    });
 
 // Kullanıcı arama
 function initUserSearch() {
