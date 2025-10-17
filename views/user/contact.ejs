@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İletişim - WebCreate</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/animations.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body>
+    <!-- Header -->
+    <% if (user) { %>
+        <% if (user.role === 'admin') { %>
+            <%- include('../partials/admin-header') %>
+        <% } else { %>
+            <%- include('../partials/user-header') %>
+        <% } %>
+    <% } else { %>
+        <%- include('../partials/header') %>
+    <% } %>
+
+    <main class="container" style="min-height: 80vh; padding: 2rem 0;">
+        <div class="animate-fade-in">
+            <div style="max-width: 600px; margin: 0 auto;">
+                <div style="text-align: center; margin-bottom: 3rem;">
+                    <h1 style="color: var(--white); margin-bottom: 0.5rem;">İletişime Geçin</h1>
+                    <p style="color: #ccc;">Sorularınız, önerileriniz veya destek talepleriniz için bize ulaşın</p>
+                </div>
+
+                <div class="row" style="margin-bottom: 3rem;">
+                    <div class="col">
+                        <div class="card" style="text-align: center; height: 100%;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">📧</div>
+                            <h3 style="color: var(--white); margin-bottom: 0.5rem;">E-posta</h3>
+                            <p style="color: #ccc; margin-bottom: 1rem;">info@webcreate.com</p>
+                            <small style="color: #888;">7/24 e-posta desteği</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col">
+                        <div class="card" style="text-align: center; height: 100%;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">📞</div>
+                            <h3 style="color: var(--white); margin-bottom: 0.5rem;">Telefon</h3>
+                            <p style="color: #ccc; margin-bottom: 1rem;">+90 (555) 123 45 67</p>
+                            <small style="color: #888;">Hafta içi 09:00 - 18:00</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col">
+                        <div class="card" style="text-align: center; height: 100%;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">💬</div>
+                            <h3 style="color: var(--white); margin-bottom: 0.5rem;">Canlı Destek</h3>
+                            <p style="color: #ccc; margin-bottom: 1rem;">7/24 Chat Desteği</p>
+                            <small style="color: #888;">Anlık mesajlaşma</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="color: var(--white); margin-bottom: 1.5rem;">📨 Mesaj Gönderin</h3>
+                    
+                    <% if (typeof error !== 'undefined' && error) { %>
+                        <div class="alert alert-error" style="margin-bottom: 1.5rem;">
+                            <%= error %>
+                        </div>
+                    <% } %>
+                    
+                    <% if (typeof success !== 'undefined' && success) { %>
+                        <div class="alert alert-success" style="margin-bottom: 1.5rem;">
+                            <%= success %>
+                        </div>
+                    <% } %>
+
+                    <form action="/messages/contact" method="POST" id="contactForm" data-validate>
+                        <input type="hidden" name="name" value="<%= user.name %>">
+                        <input type="hidden" name="email" value="<%= user.email %>">
+                        
+                        <div class="form-group">
+                            <label for="subject" class="form-label">Konu *</label>
+                            <input 
+                                type="text" 
+                                id="subject" 
+                                name="subject" 
+                                class="form-control" 
+                                required
+                                placeholder="Mesaj konunuzu belirtin"
+                                value="<%= typeof subject !== 'undefined' ? subject : '' %>"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="message" class="form-label">Mesajınız *</label>
+                            <textarea 
+                                id="message" 
+                                name="message" 
+                                class="form-control" 
+                                required
+                                placeholder="Detaylı mesajınızı yazın..."
+                                rows="8"
+                            ><%= typeof message !== 'undefined' ? message : '' %></textarea>
+                        </div>
+
+                        <button type="submit" class="btn hover-lift" style="width: 100%;">
+                            📤 Mesajı Gönder
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Sık Sorulan Sorular -->
+                <div class="card" style="margin-top: 2rem;">
+                    <h3 style="color: var(--white); margin-bottom: 1.5rem;">❓ Sık Sorulan Sorular</h3>
+                    
+                    <div style="display: grid; gap: 1rem;">
+                        <div class="faq-item">
+                            <div class="faq-question" style="color: var(--white); font-weight: 500; margin-bottom: 0.5rem;">
+                                Siparişim ne zaman teslim edilir?
+                            </div>
+                            <div class="faq-answer" style="color: #ccc; line-height: 1.6;">
+                                Sipariş teslim süresi projenin karmaşıklığına göre değişiklik göstermektedir. 
+                                Basit web siteleri 3-5 iş günü, karmaşık projeler 7-14 iş günü içinde teslim edilir.
+                            </div>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <div class="faq-question" style="color: var(--white); font-weight: 500; margin-bottom: 0.5rem;">
+                                Revizyon hakkım var mı?
+                            </div>
+                            <div class="faq-answer" style="color: #ccc; line-height: 1.6;">
+                                Evet, her sipariş için 1 revizyon hakkınız bulunmaktadır. 
+                                Teslim sonrası 7 gün içinde revizyon talebinde bulunabilirsiniz.
+                            </div>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <div class="faq-question" style="color: var(--white); font-weight: 500; margin-bottom: 0.5rem;">
+                                Ödeme yöntemleri nelerdir?
+                            </div>
+                            <div class="faq-answer" style="color: #ccc; line-height: 1.6;">
+                                Kredi kartı, banka transferi ve havale ile ödeme yapabilirsiniz. 
+                                Ödemeler sipariş onayı sonrası alınmaktadır.
+                            </div>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <div class="faq-question" style="color: var(--white); font-weight: 500; margin-bottom: 0.5rem;">
+                                Acil siparişler için ne yapmalıyım?
+                            </div>
+                            <div class="faq-answer" style="color: #ccc; line-height: 1.6;">
+                                Acil siparişler için iletişim formundan veya telefon numaramızdan 
+                                direkt iletişime geçebilirsiniz. Express hizmetimiz mevcuttur.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <%- include('../partials/footer') %>
+
+    <script src="/js/main.js"></script>
+    <% if (user && user.role === 'admin') { %>
+        <script src="/js/admin.js"></script>
+    <% } else if (user) { %>
+        <script src="/js/user.js"></script>
+    <% } %>
+
+    <script>
+    // İletişim formu gönderme
+    document.getElementById('contactForm').addEventListener('submit', function(e) {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = '⏳ Gönderiliyor...';
+        submitBtn.disabled = true;
+        
+        // Form normal şekilde submit edilecek, AJAX değil
+        // Çünkü route POST ile çalışıyor ve sayfayı yeniliyor
+    });
+
+    // SSS aç/kapa
+    document.querySelectorAll('.faq-item').forEach(item => {
+        const question = item.querySelector('.faq-question');
+        const answer = item.querySelector('.faq-answer');
+        
+        question.addEventListener('click', function() {
+            const isActive = item.classList.contains('active');
+            
+            // Tüm FAQ'ları kapat
+            document.querySelectorAll('.faq-item').forEach(faq => {
+                faq.classList.remove('active');
+                faq.querySelector('.faq-answer').style.display = 'none';
+            });
+            
+            // Tıklananı aç
+            if (!isActive) {
+                item.classList.add('active');
+                answer.style.display = 'block';
+            }
+        });
+    });
+    </script>
+
+    <style>
+    .faq-item {
+        padding: 1rem;
+        background: var(--medium-gray);
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+    }
+
+    .faq-item:hover {
+        background: var(--light-gray);
+        border-color: var(--gray);
+    }
+
+    .faq-item.active {
+        background: var(--light-gray);
+        border-color: var(--primary);
+    }
+
+    .faq-answer {
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .alert {
+        padding: 1rem;
+        border-radius: 5px;
+        margin-bottom: 1rem;
+    }
+
+    .alert-error {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #fca5a5;
+    }
+
+    .alert-success {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        color: #6ee7b7;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    </style>
+</body>
+</html>

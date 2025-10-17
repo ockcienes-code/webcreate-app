@@ -1,0 +1,71 @@
+<header class="header">
+    <nav class="navbar container">
+        <a href="/user/dashboard" class="logo">WebCreate</a>
+        
+        <ul class="nav-links">
+            <li><a href="/user/dashboard">Dashboard</a></li>
+            <li><a href="/user/orders">Siparişlerim</a></li>
+            <li><a href="/orders/create">Yeni Sipariş</a></li>
+            <li><a href="/user/contact">İletişim</a></li>
+            <li>
+                <a href="/user/notifications" class="notification-pulse">
+                    Bildirimler
+                    <% if (unreadNotifications > 0) { %>
+                        <span class="badge" style="background: var(--danger); color: white; border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; margin-left: 5px;">
+                            <%= unreadNotifications %>
+                        </span>
+                    <% } %>
+                </a>
+            </li>
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle">
+                    <%= user.name %>
+                </a>
+                <div class="dropdown-menu">
+                    <a href="/user/dashboard" class="dropdown-item">Profil</a>
+                    <a href="/auth/logout" class="dropdown-item">Çıkış</a>
+                </div>
+            </li>
+        </ul>
+    </nav>
+</header>
+
+<style>
+.dropdown {
+    position: relative;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--dark-gray);
+    border: 1px solid var(--light-gray);
+    border-radius: 5px;
+    padding: 0.5rem 0;
+    min-width: 150px;
+    display: none;
+    z-index: 1000;
+}
+
+.dropdown:hover .dropdown-menu {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+.dropdown-item {
+    display: block;
+    padding: 0.5rem 1rem;
+    color: var(--white);
+    text-decoration: none;
+    transition: background 0.3s ease;
+}
+
+.dropdown-item:hover {
+    background: var(--medium-gray);
+}
+
+.badge {
+    animation: pulse 2s infinite;
+}
+</style>

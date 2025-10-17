@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bildirimler - WebCreate</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/animations.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body>
+    <!-- Header -->
+    <% if (user) { %>
+        <% if (user.role === 'admin') { %>
+            <%- include('../partials/admin-header') %>
+        <% } else { %>
+            <%- include('../partials/user-header') %>
+        <% } %>
+    <% } else { %>
+        <%- include('../partials/header') %>
+    <% } %>
+
+    <main class="container" style="min-height: 80vh; padding: 2rem 0;">
+        <div class="animate-fade-in">
+            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 2rem;">
+                <div>
+                    <h1 style="color: var(--white); margin-bottom: 0.5rem;">Bildirimler</h1>
+                    <p style="color: #ccc;">Sistem bildirimleri ve sipariş güncellemeleri</p>
+                </div>
+                
+                <div style="display: flex; gap: 1rem;">
+                    <button onclick="markAllAsRead()" class="btn btn-outline">
+                        📭 Tümünü Okundu İşaretle
+                    </button>
+                    <button onclick="clearAllNotifications()" class="btn btn-outline">
+                        🗑️ Tümünü Temizle
+                    </button>
+                </div>
+            </div>
+
+            <% if (notifications.length > 0) { %>
+                <div class="card">
+                    <div style="display: grid; gap: 1rem;">
+                        <% notifications.forEach(notification => { %>
+                        <div class="notification-item <%= notification.isRead ? 'read' : 'unread' %>" 
+                             data-id="<%= notification._id %>"
+                             style="padding: 1.5rem; background: var(--medium-gray); border-radius: 5px; border-left: 4px solid <%= notification.isRead ? 'var(--light-gray)' : 'var(--accent)' %>; cursor: pointer; transition: all 0.3s ease;"
+                             onclick="toggleNotification('<%= notification._id %>')">
+                            
+                            <div style="display: flex; justify-content: between; align-items: start; gap: 1rem;">
+                                <div style="flex: 1;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                        <% if (!notification.isRead) { %>
+                                        <span style="display: inline-block; width: 8px; height: 8px; background: var(--accent); border-radius: 50%;"></span>
+                                        <% } %>
+                                        <h4 style="color: var(--white); margin: 0; font-size: 1.1rem;">
+                                            <%= notification.title %>
+                                        </h4>
+                                    </div>
+                                    
+                                    <p style="color: #ccc; margin-bottom: 0.5rem; line-height: 1.6;">
+                                        <%= notification.message %>
+                                    </p>
+                                    
+                                    <div style="display: flex; gap: 1rem; align-items: center;">
+                                        <span style="color: #888; font-size: 0.875rem;">
+                                            📅 <%= new Date(notification.createdAt).toLocaleDateString('tr-TR', { 
+                                                year: 'numeric', 
+                                                month: 'long', 
+                                                day: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            }) %>
+                                        </span>
+                                        
+                                        <span style="color: #888; font-size: 0.875rem;">
+                                            <%
+                                                const typeIcons = {
+                                                    'order_approved': '✅',
+                                                    'order_cancelled': '❌',
+                                                    'order_delivered': '🎁',
+                                                    'revision_request': '🔄',
+                                                    'message_reply': '📧'
+                                                };
+                                            %>
+                                            <%= typeIcons[notification.type] %> 
+                                            <%
+                                                const typeText = {
+                                                    'order_approved': 'Sipariş Onayı',
+                                                    'order_cancelled': 'Sipariş İptali',
+                                                    'order_delivered': 'Sipariş Teslimi',
+                                                    'revision_request': 'Revizyon',
+                                                    'message_reply': 'Mesaj Yanıtı'
+                                                };
+                                            %>
+                                            <%= typeText[notification.type] %>
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <% if (notification.relatedOrder) { %>
+                                    <a href="/orders/<%= notification.relatedOrder._id || notification.relatedOrder %>" 
+                                       class="btn" 
+                                       style="padding: 0.25rem 0.5rem; font-size: 0.875rem;"
+                                       onclick="event.stopPropagation()">
+                                        📋 Siparişe Git
+                                    </a>
+                                    <% } %>
+                                    
+                                    <button onclick="deleteNotification('<%= notification._id %>', event)" 
+                                            class="btn btn-outline" 
+                                            style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <% }); %>
+                    </div>
+                </div>
+                
+                <!-- Sayfalama -->
+                <div style="display: flex; justify-content: center; margin-top: 2rem; gap: 1rem;">
+                    <button class="btn btn-outline">← Önceki</button>
+                    <span style="color: #ccc; padding: 0.5rem 1rem;">Sayfa 1</span>
+                    <button class="btn btn-outline">Sonraki →</button>
+                </div>
+            <% } else { %>
+                <div class="card">
+                    <div style="text-align: center; padding: 4rem 2rem; color: #ccc;">
+                        <div style="font-size: 4rem; margin-bottom: 1rem;">🔔</div>
+                        <h3 style="color: var(--white); margin-bottom: 1rem;">Henüz bildiriminiz yok</h3>
+                        <p>Yeni siparişler, güncellemeler ve mesajlar burada görünecek.</p>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+    </main>
+
+    <%- include('../partials/footer') %>
+
+    <script src="/js/main.js"></script>
+    <% if (user && user.role === 'admin') { %>
+        <script src="/js/admin.js"></script>
+    <% } else if (user) { %>
+        <script src="/js/user.js"></script>
+    <% } %>
+
+    <script>
+    // Bildirim detayını aç/kapa
+    function toggleNotification(notificationId) {
+        const notification = document.querySelector(`[data-id="${notificationId}"]`);
+        notification.classList.toggle('expanded');
+        
+        // Okundu olarak işaretle
+        if (!notification.classList.contains('read')) {
+            markAsRead(notificationId);
+        }
+    }
+
+    // Tekil bildirimi okundu olarak işaretle
+    async function markAsRead(notificationId) {
+        try {
+            const response = await fetch(`/user/notifications/${notificationId}/read`, {
+                method: 'POST'
+            });
+            
+            if (response.ok) {
+                const notification = document.querySelector(`[data-id="${notificationId}"]`);
+                notification.classList.add('read');
+                notification.style.borderLeftColor = 'var(--light-gray)';
+                
+                // Okunmamış bildirim sayısını güncelle
+                updateUnreadCount();
+            }
+        } catch (error) {
+            console.error('Bildirim okundu işaretleme hatası:', error);
+        }
+    }
+
+    // Tüm bildirimleri okundu olarak işaretle
+    async function markAllAsRead() {
+        try {
+            const response = await fetch('/user/notifications/mark-all-read', {
+                method: 'POST'
+            });
+            
+            if (response.ok) {
+                // Tüm bildirimleri okundu olarak işaretle
+                document.querySelectorAll('.notification-item').forEach(item => {
+                    item.classList.add('read');
+                    item.style.borderLeftColor = 'var(--light-gray)';
+                });
+                
+                // Okunmamış bildirim sayısını sıfırla
+                updateUnreadCount();
+                
+                showNotification('Tüm bildirimler okundu olarak işaretlendi!', 'success');
+            }
+        } catch (error) {
+            console.error('Tüm bildirimleri okundu işaretleme hatası:', error);
+            showNotification('İşlem sırasında bir hata oluştu!', 'error');
+        }
+    }
+
+    // Bildirimi sil
+    async function deleteNotification(notificationId, event) {
+        event.stopPropagation();
+        
+        if (confirm('Bu bildirimi silmek istediğinizden emin misiniz?')) {
+            try {
+                const response = await fetch(`/user/notifications/${notificationId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    const notification = document.querySelector(`[data-id="${notificationId}"]`);
+                    notification.style.opacity = '0';
+                    notification.style.transform = 'translateX(-100px)';
+                    
+                    setTimeout(() => {
+                        notification.remove();
+                        updateUnreadCount();
+                    }, 300);
+                    
+                    showNotification('Bildirim silindi!', 'success');
+                }
+            } catch (error) {
+                console.error('Bildirim silme hatası:', error);
+                showNotification('Bildirim silinirken bir hata oluştu!', 'error');
+            }
+        }
+    }
+
+    // Tüm bildirimleri temizle
+    async function clearAllNotifications() {
+        if (confirm('Tüm bildirimleri silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
+            try {
+                const response = await fetch('/user/notifications/clear-all', {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    // Tüm bildirimleri animasyonla kaldır
+                    const notifications = document.querySelectorAll('.notification-item');
+                    notifications.forEach((notification, index) => {
+                        setTimeout(() => {
+                            notification.style.opacity = '0';
+                            notification.style.transform = 'translateX(-100px)';
+                        }, index * 100);
+                    });
+                    
+                    setTimeout(() => {
+                        document.querySelector('.card').innerHTML = `
+                            <div style="text-align: center; padding: 4rem 2rem; color: #ccc;">
+                                <div style="font-size: 4rem; margin-bottom: 1rem;">🔔</div>
+                                <h3 style="color: var(--white); margin-bottom: 1rem;">Henüz bildiriminiz yok</h3>
+                                <p>Yeni siparişler, güncellemeler ve mesajlar burada görünecek.</p>
+                            </div>
+                        `;
+                    }, notifications.length * 100 + 300);
+                    
+                    updateUnreadCount();
+                    showNotification('Tüm bildirimler temizlendi!', 'success');
+                }
+            } catch (error) {
+                console.error('Tüm bildirimleri temizleme hatası:', error);
+                showNotification('Temizleme sırasında bir hata oluştu!', 'error');
+            }
+        }
+    }
+
+    // Okunmamış bildirim sayısını güncelle
+    function updateUnreadCount() {
+        const unreadCount = document.querySelectorAll('.notification-item:not(.read)').length;
+        
+        // Badge'i güncelle
+        const badge = document.querySelector('.notification-badge');
+        if (badge) {
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount;
+            } else {
+                badge.remove();
+            }
+        }
+        
+        // Sayfa başlığını güncelle
+        document.title = document.title.replace(/\(\d+\)/, '');
+        if (unreadCount > 0) {
+            document.title = `(${unreadCount}) ${document.title}`;
+        }
+    }
+
+    // Sayfa yüklendiğinde okunmamış bildirimleri işaretle
+    document.addEventListener('DOMContentLoaded', function() {
+        // Okunmamış bildirimleri vurgula
+        document.querySelectorAll('.notification-item:not(.read)').forEach(item => {
+            item.style.background = 'var(--dark-gray)';
+        });
+        
+        // Okunmamış bildirim sayısını güncelle
+        updateUnreadCount();
+    });
+    </script>
+
+    <style>
+    .notification-item {
+        transition: all 0.3s ease;
+    }
+
+    .notification-item:hover {
+        transform: translateX(5px);
+        background: var(--dark-gray) !important;
+    }
+
+    .notification-item.unread {
+        background: var(--dark-gray);
+    }
+
+    .notification-item.read {
+        opacity: 0.8;
+    }
+    </style>
+</body>
+</html>

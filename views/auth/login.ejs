@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giriş Yap - WebCreate</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/animations.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body>
+    <!-- Header -->
+    <% if (user) { %>
+        <% if (user.role === 'admin') { %>
+            <%- include('../partials/admin-header') %>
+        <% } else { %>
+            <%- include('../partials/user-header') %>
+        <% } %>
+    <% } else { %>
+        <%- include('../partials/header') %>
+    <% } %>
+
+    <main class="container" style="min-height: 80vh; padding: 2rem 0;">
+        <div class="animate-fade-in">
+            <div class="container" style="max-width: 400px; margin: 4rem auto;">
+                <div class="card">
+                    <div style="text-align: center; margin-bottom: 2rem;">
+                        <h1 style="color: var(--white); margin-bottom: 0.5rem;">Giriş Yap</h1>
+                        <p style="color: #ccc;">Hesabınıza erişin</p>
+                    </div>
+
+                    <% if (error) { %>
+                        <div class="alert alert-error">
+                            <%= error %>
+                        </div>
+                    <% } %>
+
+                    <form action="/auth/login" method="POST" data-validate>
+                        <div class="form-group">
+                            <label for="email" class="form-label">E-posta</label>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                class="form-control" 
+                                required
+                                placeholder="ornek@email.com"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password" class="form-label">Şifre</label>
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password" 
+                                class="form-control" 
+                                required
+                                placeholder="Şifrenizi girin"
+                            >
+                        </div>
+
+                        <button type="submit" class="btn" style="width: 100%; margin-bottom: 1rem;">
+                            Giriş Yap
+                        </button>
+
+                        <div style="text-align: center;">
+                            <p style="color: #ccc;">
+                                Hesabınız yok mu? 
+                                <a href="/auth/register" style="color: var(--accent); text-decoration: none;">
+                                    Kayıt Olun
+                                </a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <%- include('../partials/footer') %>
+
+    <script src="/js/main.js"></script>
+    <% if (user && user.role === 'admin') { %>
+        <script src="/js/admin.js"></script>
+    <% } else if (user) { %>
+        <script src="/js/user.js"></script>
+    <% } %>
+</body>
+</html>

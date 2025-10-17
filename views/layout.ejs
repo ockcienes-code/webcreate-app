@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title || 'WebCreate' %></title>
+    
+    <!-- Fontlar -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Stil dosyaları -->
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/animations.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body>
+    <!-- Header -->
+    <% if (user) { %>
+        <% if (user.role === 'admin') { %>
+            <%- include('partials/admin-header') %>
+        <% } else { %>
+            <%- include('partials/user-header') %>
+        <% } %>
+    <% } else { %>
+        <%- include('partials/header') %>
+    <% } %>
+
+    <!-- Main Content -->
+    <main class="container" style="min-height: 80vh; padding: 2rem 0;">
+        <%- body %>
+    </main>
+
+    <!-- Footer -->
+    <%- include('partials/footer') %>
+
+    <!-- Script dosyaları -->
+    <script src="/js/main.js"></script>
+    <% if (user && user.role === 'admin') { %>
+        <script src="/js/admin.js"></script>
+    <% } else if (user) { %>
+        <script src="/js/user.js"></script>
+    <% } %>
+</body>
+</html>

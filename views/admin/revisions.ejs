@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revizyon Yönetimi - WebCreate</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/animations.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body>
+    <!-- Header -->
+    <% if (user) { %>
+        <% if (user.role === 'admin') { %>
+            <%- include('../partials/admin-header') %>
+        <% } else { %>
+            <%- include('../partials/user-header') %>
+        <% } %>
+    <% } else { %>
+        <%- include('../partials/header') %>
+    <% } %>
+
+    <main class="container" style="min-height: 80vh; padding: 2rem 0;">
+        <div class="animate-fade-in">
+            <!-- Başlık ve Filtreler -->
+            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h1 style="color: var(--white); margin-bottom: 0.5rem;">Revizyon Yönetimi</h1>
+                    <p style="color: #ccc;">Bekleyen revizyon istekleri ve yönetimi</p>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <select id="revisionFilter" class="form-control" style="width: 200px;">
+                        <option value="all">Tüm Revizyonlar</option>
+                        <option value="pending">⏳ Bekleyenler</option>
+                        <option value="accepted">✅ Kabul Edilenler</option>
+                        <option value="rejected">❌ Reddedilenler</option>
+                        <option value="counter_offer">💡 Karşı Teklifler</option>
+                    </select>
+                    
+                    <div style="color: #ccc; background: var(--medium-gray); padding: 0.5rem 1rem; border-radius: 5px;">
+                        <strong><%= revisions.length %></strong> revizyon
+                    </div>
+                </div>
+            </div>
+
+            <!-- İstatistik Kartları -->
+            <div class="stats-grid" style="margin-bottom: 2rem;">
+                <div class="stat-card">
+                    <div class="stat-number">
+                        <%= revisions.filter(r => r.revisionRequest.status === 'pending').length %>
+                    </div>
+                    <div class="stat-label">Bekleyen</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-number">
+                        <%= revisions.filter(r => r.revisionRequest.status === 'accepted').length %>
+                    </div>
+                    <div class="stat-label">Kabul Edilen</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-number">
+                        <%= revisions.filter(r => r.revisionRequest.status === 'rejected').length %>
+                    </div>
+                    <div class="stat-label">Reddedilen</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-number">
+                        <%= revisions.filter(r => r.revisionRequest.status === 'counter_offer').length %>
+                    </div>
+                    <div class="stat-label">Karşı Teklif</div>
+                </div>
+            </div>
+
+            <!-- Revizyon Listesi -->
+            <% if (revisions.length > 0) { %>
+                <div class="card">
+                    <div style="display: grid; gap: 1.5rem;">
+                        <% revisions.forEach(order => { %>
+                        <div class="revision-item" 
+                             data-status="<%= order.revisionRequest.status %>"
+                             style="padding: 1.5rem; background: var(--medium-gray); border-radius: 10px; border-left: 4px solid <%= getRevisionStatusColor(order.revisionRequest.status) %>;">
+                            
+                            <div style="display: flex; justify-content: between; align-items: start; gap: 2rem; margin-bottom: 1rem;">
+                                <div style="flex: 1;">
+                                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                                        <h3 style="color: var(--white); margin: 0;"><%= order.title %></h3>
+                                        <span class="status-badge status-<%= order.revisionRequest.status %>">
+                                            <%
+                                                const revisionStatusText = {
+                                                    'pending': '⏳ Beklemede',
+                                                    'accepted': '✅ Kabul Edildi',
+                                                    'rejected': '❌ Reddedildi',
+                                                    'counter_offer': '💡 Karşı Teklif'
+                                                };
+                                            %>
+                                            <%= revisionStatusText[order.revisionRequest.status] %>
+                                        </span>
+                                    </div>
+                                    
+                                    <div style="color: #ccc; margin-bottom: 0.5rem;">
+                                        <strong>Kullanıcı:</strong> <%= order.user.name %> (<%= order.user.email %>)
+                                    </div>
+                                    
+                                    <div style="color: #ccc; font-size: 0.875rem;">
+                                        <strong>İstek Tarihi:</strong> 
+                                        <%= new Date(order.revisionRequest.requestedAt).toLocaleDateString('tr-TR', { 
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        }) %>
+                                    </div>
+                                </div>
+                                
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    <a href="/admin/orders/<%= order._id %>" class="btn" style="padding: 0.5rem 1rem;">
+                                        👁️ Siparişe Git
+                                    </a>
+                                    
+                                    <% if (order.revisionRequest.status === 'pending') { %>
+                                    <button onclick="acceptRevision('<%= order._id %>')" class="btn btn-success" style="padding: 0.5rem 1rem;">
+                                        ✅ Kabul Et
+                                    </button>
+                                    <button onclick="rejectRevision('<%= order._id %>')" class="btn btn-danger" style="padding: 0.5rem 1rem;">
+                                        ❌ Reddet
+                                    </button>
+                                    <button onclick="counterOfferRevision('<%= order._id %>')" class="btn btn-outline" style="padding: 0.5rem 1rem;">
+                                        💡 Karşı Teklif
+                                    </button>
+                                    <% } %>
+                                </div>
+                            </div>
+                            
+                            <!-- Revizyon Açıklaması -->
+                            <div style="background: var(--dark-gray); padding: 1rem; border-radius: 5px; margin-bottom: 1rem;">
+                                <strong style="color: var(--white); display: block; margin-bottom: 0.5rem;">📝 Kullanıcı Açıklaması:</strong>
+                                <p style="color: #ccc; line-height: 1.6; margin: 0;"><%= order.revisionRequest.description %></p>
+                            </div>
+                            
+                            <!-- Orijinal Sipariş Bilgileri -->
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                                <div>
+                                    <strong style="color: #ccc; font-size: 0.875rem;">Orijinal Fiyat</strong>
+                                    <div style="color: var(--white);">
+                                        <% if (order.price > 0) { %>
+                                            <%= order.price %> TL
+                                        <% } else { %>
+                                            <span style="color: #ccc;">-</span>
+                                        <% } %>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <strong style="color: #ccc; font-size: 0.875rem;">Teslim Tarihi</strong>
+                                    <div style="color: var(--white);">
+                                        <% if (order.deadline) { %>
+                                            <%= new Date(order.deadline).toLocaleDateString('tr-TR') %>
+                                        <% } else { %>
+                                            <span style="color: #ccc;">-</span>
+                                        <% } %>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <strong style="color: #ccc; font-size: 0.875rem;">Sipariş Durumu</strong>
+                                    <div>
+                                        <span class="status-badge status-<%= order.status %>" style="font-size: 0.875rem;">
+                                            <%
+                                                const statusText = {
+                                                    'pending': 'Beklemede',
+                                                    'in_progress': 'Üretimde',
+                                                    'delivered': 'Teslim Edildi',
+                                                    'revision': 'Revizyonda',
+                                                    'cancelled': 'İptal Edildi'
+                                                };
+                                            %>
+                                            <%= statusText[order.status] %>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Admin Yanıtı -->
+                            <% if (order.revisionRequest.counterOffer) { %>
+                            <div style="background: rgba(0, 123, 255, 0.1); padding: 1rem; border-radius: 5px; border-left: 4px solid var(--accent);">
+                                <strong style="color: var(--white); display: block; margin-bottom: 0.5rem;">💡 Admin Yanıtı:</strong>
+                                <p style="color: #ccc; line-height: 1.6; margin: 0;"><%= order.revisionRequest.counterOffer %></p>
+                            </div>
+                            <% } %>
+                            
+                            <!-- İşlem Geçmişi -->
+                            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--light-gray);">
+                                <strong style="color: #ccc; font-size: 0.875rem;">İşlem Geçmişi:</strong>
+                                <div style="color: #888; font-size: 0.875rem; margin-top: 0.5rem;">
+                                    • <%= new Date(order.createdAt).toLocaleDateString('tr-TR') %> - Sipariş oluşturuldu<br>
+                                    • <%= new Date(order.revisionRequest.requestedAt).toLocaleDateString('tr-TR') %> - Revizyon istendi
+                                    <% if (order.revisionRequest.status !== 'pending') { %>
+                                        <br>• <%= new Date(order.updatedAt).toLocaleDateString('tr-TR') %> - Revizyon <%= order.revisionRequest.status === 'accepted' ? 'kabul edildi' : order.revisionRequest.status === 'rejected' ? 'reddedildi' : 'için karşı teklif sunuldu' %>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+                        <% }); %>
+                    </div>
+                </div>
+            <% } else { %>
+                <div class="card">
+                    <div style="text-align: center; padding: 4rem 2rem; color: #ccc;">
+                        <div style="font-size: 4rem; margin-bottom: 1rem;">🔄</div>
+                        <h3 style="color: var(--white); margin-bottom: 0.5rem;">Henüz revizyon isteği bulunmuyor</h3>
+                        <p>Kullanıcılar revizyon istediğinde burada listelenecek</p>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+    </main>
+
+    <%- include('../partials/footer') %>
+
+    <script src="/js/main.js"></script>
+    <% if (user && user.role === 'admin') { %>
+        <script src="/js/admin.js"></script>
+    <% } else if (user) { %>
+        <script src="/js/user.js"></script>
+    <% } %>
+
+    <!-- Revizyon Karar Modal -->
+    <div id="revisionDecisionModal" class="modal" style="display: none;">
+        <div class="card" style="max-width: 500px; width: 90%;">
+            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="color: var(--white); margin: 0;" id="decisionModalTitle">Revizyon Kararı</h3>
+                <button onclick="closeDecisionModal()" style="background: none; border: none; color: #ccc; font-size: 1.5rem; cursor: pointer;">×</button>
+            </div>
+            
+            <form id="decisionForm">
+                <input type="hidden" id="decisionOrderId">
+                <input type="hidden" id="decisionType">
+                
+                <div class="form-group" id="counterOfferGroup" style="display: none;">
+                    <label for="counterOfferMessage" class="form-label">Karşı Teklif Mesajı</label>
+                    <textarea 
+                        id="counterOfferMessage" 
+                        class="form-control" 
+                        rows="4" 
+                        placeholder="Kullanıcıya göndermek istediğiniz karşı teklif mesajını yazın..."
+                        required
+                    ></textarea>
+                </div>
+                
+                <div class="form-group" id="rejectReasonGroup" style="display: none;">
+                    <label for="rejectReason" class="form-label">Reddetme Nedeni</label>
+                    <textarea 
+                        id="rejectReason" 
+                        class="form-control" 
+                        rows="4" 
+                        placeholder="Reddetme nedeninizi açıklayın..."
+                        required
+                    ></textarea>
+                </div>
+                
+                <div id="acceptMessage" style="display: none;">
+                    <div style="background: rgba(40, 167, 69, 0.1); padding: 1rem; border-radius: 5px; margin-bottom: 1rem;">
+                        <p style="color: #ccc; margin: 0; text-align: center;">
+                            ✅ Bu revizyon isteğini kabul etmek istediğinizden emin misiniz?
+                        </p>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" onclick="closeDecisionModal()" class="btn btn-outline" style="flex: 1;">
+                        İptal
+                    </button>
+                    <button type="submit" class="btn" style="flex: 1;" id="decisionSubmitBtn">
+                        Gönder
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    function getRevisionStatusColor(status) {
+        const colors = {
+            'pending': 'var(--warning)',
+            'accepted': 'var(--success)',
+            'rejected': 'var(--danger)',
+            'counter_offer': 'var(--accent)'
+        };
+        return colors[status] || 'var(--light-gray)';
+    }
+
+    // Revizyon filtreleme
+    document.getElementById('revisionFilter').addEventListener('change', function(e) {
+        const status = e.target.value;
+        const items = document.querySelectorAll('.revision-item');
+        
+        items.forEach(item => {
+            if (status === 'all') {
+                item.style.display = 'block';
+            } else {
+                if (item.dataset.status === status) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            }
+        });
+    });
+
+    // Revizyon kabul etme
+    function acceptRevision(orderId) {
+        document.getElementById('decisionOrderId').value = orderId;
+        document.getElementById('decisionType').value = 'accept';
+        document.getElementById('decisionModalTitle').textContent = 'Revizyonu Kabul Et';
+        document.getElementById('acceptMessage').style.display = 'block';
+        document.getElementById('counterOfferGroup').style.display = 'none';
+        document.getElementById('rejectReasonGroup').style.display = 'none';
+        document.getElementById('decisionSubmitBtn').textContent = '✅ Kabul Et';
+        document.getElementById('decisionSubmitBtn').className = 'btn btn-success';
+        document.getElementById('revisionDecisionModal').style.display = 'flex';
+    }
+
+    // Revizyon reddetme
+    function rejectRevision(orderId) {
+        document.getElementById('decisionOrderId').value = orderId;
+        document.getElementById('decisionType').value = 'reject';
+        document.getElementById('decisionModalTitle').textContent = 'Revizyonu Reddet';
+        document.getElementById('acceptMessage').style.display = 'none';
+        document.getElementById('counterOfferGroup').style.display = 'none';
+        document.getElementById('rejectReasonGroup').style.display = 'block';
+        document.getElementById('decisionSubmitBtn').textContent = '❌ Reddet';
+        document.getElementById('decisionSubmitBtn').className = 'btn btn-danger';
+        document.getElementById('revisionDecisionModal').style.display = 'flex';
+    }
+
+    // Karşı teklif sunma
+    function counterOfferRevision(orderId) {
+        document.getElementById('decisionOrderId').value = orderId;
+        document.getElementById('decisionType').value = 'counter_offer';
+        document.getElementById('decisionModalTitle').textContent = 'Karşı Teklif Sun';
+        document.getElementById('acceptMessage').style.display = 'none';
+        document.getElementById('counterOfferGroup').style.display = 'block';
+        document.getElementById('rejectReasonGroup').style.display = 'none';
+        document.getElementById('decisionSubmitBtn').textContent = '💡 Teklif Gönder';
+        document.getElementById('decisionSubmitBtn').className = 'btn';
+        document.getElementById('revisionDecisionModal').style.display = 'flex';
+    }
+
+    function closeDecisionModal() {
+        document.getElementById('revisionDecisionModal').style.display = 'none';
+        document.getElementById('decisionForm').reset();
+    }
+
+    // Karar formu gönderme
+    document.getElementById('decisionForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const orderId = document.getElementById('decisionOrderId').value;
+        const decisionType = document.getElementById('decisionType').value;
+        const counterOffer = document.getElementById('counterOfferMessage').value;
+        const rejectReason = document.getElementById('rejectReason').value;
+        
+        let decision, message;
+        
+        switch(decisionType) {
+            case 'accept':
+                decision = 'accepted';
+                message = '';
+                break;
+            case 'reject':
+                decision = 'rejected';
+                message = rejectReason;
+                break;
+            case 'counter_offer':
+                decision = 'counter_offer';
+                message = counterOffer;
+                break;
+        }
+        
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = '⏳ Gönderiliyor...';
+        submitBtn.disabled = true;
+        
+        try {
+            const response = await fetch(`/admin/revisions/${orderId}/decision`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    decision,
+                    counterOffer: message
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showNotification('Revizyon kararı gönderildi!', 'success');
+                closeDecisionModal();
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showNotification(data.error || 'Karar gönderilirken bir hata oluştu!', 'error');
+                submitBtn.innerHTML = document.getElementById('decisionSubmitBtn').textContent;
+                submitBtn.disabled = false;
+            }
+        } catch (error) {
+            console.error('Revizyon kararı gönderme hatası:', error);
+            showNotification('İşlem sırasında bir hata oluştu!', 'error');
+            submitBtn.innerHTML = document.getElementById('decisionSubmitBtn').textContent;
+            submitBtn.disabled = false;
+        }
+    });
+
+    // Modal dışına tıklayınca kapatma
+    document.getElementById('revisionDecisionModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeDecisionModal();
+        }
+    });
+    </script>
+
+    <style>
+    .revision-item {
+        transition: all 0.3s ease;
+    }
+
+    .revision-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    </style>
+</body>
+</html>

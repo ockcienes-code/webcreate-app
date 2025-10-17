@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - WebCreate</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/animations.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body>
+    <%- include('../partials/admin-header') %>
+
+    <main class="container" style="min-height: 80vh; padding: 2rem 0;">
+        <div class="animate-fade-in">
+            <!-- Dashboard Header -->
+            <div class="dashboard-header">
+                <h1 style="color: var(--white); margin-bottom: 0.5rem;">Admin Dashboard</h1>
+                <p style="color: #ccc;">Sistem istatistikleri ve yönetim paneli</p>
+            </div>
+
+            <!-- İstatistik Kartları -->
+            <div class="stats-grid">
+                <div class="stat-card animate-slide-left delay-100" data-stat="users">
+                    <div class="stat-number"><%= stats.totalUsers %></div>
+                    <div class="stat-label">Toplam Kullanıcı</div>
+                </div>
+                
+                <div class="stat-card animate-slide-left delay-200" data-stat="orders">
+                    <div class="stat-number"><%= stats.totalOrders %></div>
+                    <div class="stat-label">Toplam Sipariş</div>
+                </div>
+                
+                <div class="stat-card animate-slide-left delay-300" data-stat="messages">
+                    <div class="stat-number"><%= stats.totalMessages %></div>
+                    <div class="stat-label">Toplam Mesaj</div>
+                </div>
+                
+                <div class="stat-card animate-slide-left delay-400" data-stat="revisions">
+                    <div class="stat-number"><%= stats.pendingRevisions %></div>
+                    <div class="stat-label">Bekleyen Revizyon</div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Sol Kolon -->
+                <div class="col">
+                    <!-- Son Siparişler -->
+                    <div class="dashboard-section">
+                        <h2 class="section-title">📦 Son Siparişler</h2>
+                        
+                        <% if (recentOrders.length > 0) { %>
+                            <div class="card">
+                                <div class="table">
+                                    <table style="width: 100%;">
+                                        <thead>
+                                            <tr>
+                                                <th>Kullanıcı</th>
+                                                <th>Başlık</th>
+                                                <th>Durum</th>
+                                                <th>Tarih</th>
+                                                <th>İşlem</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% recentOrders.forEach(order => { %>
+                                            <tr data-order="<%= order._id %>">
+                                                <td>
+                                                    <div>
+                                                        <div style="color: var(--white); font-weight: 500;"><%= order.user.name %></div>
+                                                        <div style="color: #ccc; font-size: 0.875rem;"><%= order.user.email %></div>
+                                                    </div>
+                                                </td>
+                                                <td style="font-weight: 500;"><%= order.title %></td>
+                                                <td>
+                                                    <span class="status-badge status-<%= order.status %> order-status">
+                                                        <%
+                                                            const statusText = {
+                                                                'pending': '⏳ Beklemede',
+                                                                'in_progress': '🚀 Üretimde',
+                                                                'delivered': '✅ Teslim Edildi',
+                                                                'revision': '🔄 Revizyonda',
+                                                                'cancelled': '❌ İptal Edildi'
+                                                            };
+                                                        %>
+                                                        <%= statusText[order.status] %>
+                                                    </span>
+                                                </td>
+                                                <td><%= new Date(order.createdAt).toLocaleDateString('tr-TR') %></td>
+                                                <td>
+                                                    <a href="/admin/orders/<%= order._id %>" class="btn" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+                                                        Yönet
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            <% }); %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <div style="text-align: center; margin-top: 1rem;">
+                                    <a href="/admin/orders" class="btn btn-outline">
+                                        Tüm Siparişleri Gör
+                                    </a>
+                                </div>
+                            </div>
+                        <% } else { %>
+                            <div class="card">
+                                <div style="text-align: center; padding: 2rem; color: #ccc;">
+                                    <p>Henüz sipariş bulunmuyor.</p>
+                                </div>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <!-- Sistem Durumu -->
+                    <div class="dashboard-section">
+                        <h2 class="section-title">⚙️ Sistem Durumu</h2>
+                        
+                        <div class="card">
+                            <div style="display: grid; gap: 1rem;">
+                                <div style="display: flex; justify-content: between; align-items: center;">
+                                    <span>Veritabanı:</span>
+                                    <span data-health="database" class="health-indicator healthy" title="Bağlantı aktif">🟢</span>
+                                </div>
+                                
+                                <div style="display: flex; justify-content: between; align-items: center;">
+                                    <span>Dosya Depolama:</span>
+                                    <span data-health="storage" class="health-indicator healthy" title="Depolama alanı yeterli">🟢</span>
+                                </div>
+                                
+                                <div style="display: flex; justify-content: between; align-items: center;">
+                                    <span>E-posta Sistemi:</span>
+                                    <span data-health="email" class="health-indicator healthy" title="E-posta servisi çalışıyor">🟢</span>
+                                </div>
+                                
+                                <div style="display: flex; justify-content: between; align-items: center;">
+                                    <span>Sunucu Performansı:</span>
+                                    <span data-health="performance" class="health-indicator healthy" title="Performans optimum">🟢</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sağ Kolon -->
+                <div class="col">
+                    <!-- Son Mesajlar -->
+                    <div class="dashboard-section">
+                        <h2 class="section-title">📧 Son Mesajlar</h2>
+                        
+                        <% if (recentMessages.length > 0) { %>
+                            <div class="card">
+                                <div style="display: grid; gap: 1rem;">
+                                    <% recentMessages.forEach(message => { %>
+                                    <div style="padding: 1rem; background: var(--medium-gray); border-radius: 5px; border-left: 4px solid <%= message.isRead ? 'var(--light-gray)' : 'var(--accent)' %>;">
+                                        <div style="display: flex; justify-content: between; align-items: start; margin-bottom: 0.5rem;">
+                                            <div>
+                                                <div style="color: var(--white); font-weight: 500;"><%= message.name %></div>
+                                                <div style="color: #ccc; font-size: 0.875rem;"><%= message.email %></div>
+                                            </div>
+                                            <span style="color: #888; font-size: 0.875rem;">
+                                                <%= new Date(message.createdAt).toLocaleDateString('tr-TR') %>
+                                            </span>
+                                        </div>
+                                        
+                                        <div style="color: var(--white); font-weight: 500; margin-bottom: 0.5rem;">
+                                            <%= message.subject %>
+                                        </div>
+                                        
+                                        <p style="color: #ccc; font-size: 0.875rem; line-height: 1.4; margin-bottom: 0.5rem;">
+                                            <%= message.message.substring(0, 100) %>...
+                                        </p>
+                                        
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <a href="/admin/messages#message-<%= message._id %>" class="btn" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+                                                Cevapla
+                                            </a>
+                                            <% if (!message.isRead) { %>
+                                            <span style="background: var(--accent); color: white; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem;">
+                                                Yeni
+                                            </span>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                    <% }); %>
+                                </div>
+                                
+                                <div style="text-align: center; margin-top: 1rem;">
+                                    <a href="/admin/messages" class="btn btn-outline">
+                                        Tüm Mesajları Gör
+                                    </a>
+                                </div>
+                            </div>
+                        <% } else { %>
+                            <div class="card">
+                                <div style="text-align: center; padding: 2rem; color: #ccc;">
+                                    <p>Henüz mesaj bulunmuyor.</p>
+                                </div>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <!-- Hızlı İşlemler -->
+                    <div class="dashboard-section">
+                        <h2 class="section-title">🚀 Hızlı İşlemler</h2>
+                        
+                        <div class="card">
+                            <div style="display: grid; gap: 1rem;">
+                                <a href="/admin/orders" class="btn hover-lift" style="text-align: center;">
+                                    📦 Siparişleri Yönet
+                                </a>
+                                
+                                <a href="/admin/users" class="btn btn-outline hover-lift" style="text-align: center;">
+                                    👥 Kullanıcıları Yönet
+                                </a>
+                                
+                                <a href="/admin/revisions" class="btn btn-outline hover-lift" style="text-align: center;">
+                                    🔄 Revizyonları İncele
+                                    <% if (stats.pendingRevisions > 0) { %>
+                                        <span style="background: var(--warning); color: black; border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; margin-left: 0.5rem;">
+                                            <%= stats.pendingRevisions %>
+                                        </span>
+                                    <% } %>
+                                </a>
+                                
+                                <a href="/admin/messages" class="btn btn-outline hover-lift" style="text-align: center;">
+                                    📧 Mesajları Gör
+                                    <% if (recentMessages.some(m => !m.isRead)) { %>
+                                        <span style="background: var(--accent); color: white; border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; margin-left: 0.5rem;">
+                                            <%= recentMessages.filter(m => !m.isRead).length %>
+                                        </span>
+                                    <% } %>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sistem Bilgileri -->
+                    <div class="dashboard-section">
+                        <h2 class="section-title">ℹ️ Sistem Bilgileri</h2>
+                        
+                        <div class="card">
+                            <div style="display: grid; gap: 0.75rem;">
+                                <div style="display: flex; justify-content: between;">
+                                    <span style="color: #ccc;">Sunucu Zamanı:</span>
+                                    <span style="color: var(--white);" id="serverTime"><%= new Date().toLocaleString('tr-TR') %></span>
+                                </div>
+                                
+                                <div style="display: flex; justify-content: between;">
+                                    <span style="color: #ccc;">Uptime:</span>
+                                    <span style="color: var(--white);">99.8%</span>
+                                </div>
+                                
+                                <div style="display: flex; justify-content: between;">
+                                    <span style="color: #ccc;">Son Yedekleme:</span>
+                                    <span style="color: var(--white);">2 saat önce</span>
+                                </div>
+                                
+                                <div style="display: flex; justify-content: between;">
+                                    <span style="color: #ccc;">Versiyon:</span>
+                                    <span style="color: var(--white);">v1.0.0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <%- include('../partials/footer') %>
+
+    <script src="/js/main.js"></script>
+    <script src="/js/admin.js"></script>
+    
+    <script>
+    // Sunucu zamanını güncelle
+    function updateServerTime() {
+        const now = new Date();
+        document.getElementById('serverTime').textContent = now.toLocaleString('tr-TR');
+    }
+
+    setInterval(updateServerTime, 1000);
+
+    // Sistem sağlık kontrolü
+    async function checkSystemHealth() {
+        try {
+            const response = await fetch('/admin/system/health');
+            const healthData = await response.json();
+            
+            updateHealthIndicators(healthData);
+        } catch (error) {
+            console.error('Sistem sağlık kontrolü hatası:', error);
+        }
+    }
+
+    function updateHealthIndicators(healthData) {
+        const indicators = {
+            'database': document.querySelector('[data-health="database"]'),
+            'storage': document.querySelector('[data-health="storage"]'),
+            'email': document.querySelector('[data-health="email"]'),
+            'performance': document.querySelector('[data-health="performance"]')
+        };
+        
+        Object.keys(indicators).forEach(key => {
+            if (indicators[key] && healthData[key]) {
+                const status = healthData[key].status;
+                indicators[key].className = `health-indicator ${status}`;
+                indicators[key].title = healthData[key].message;
+            }
+        });
+    }
+
+    // Her 30 saniyede bir sistem sağlığını kontrol et
+    setInterval(checkSystemHealth, 30000);
+
+    // İlk yüklemede kontrol et
+    checkSystemHealth();
+    </script>
+
+    <style>
+    .health-indicator {
+        font-size: 1.2rem;
+    }
+
+    .health-indicator.healthy {
+        color: var(--success);
+    }
+
+    .health-indicator.warning {
+        color: var(--warning);
+    }
+
+    .health-indicator.error {
+        color: var(--danger);
+    }
+    </style>
+</body>
+</html>

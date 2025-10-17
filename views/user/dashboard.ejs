@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - WebCreate</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/animations.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body>
+    <!-- Header -->
+    <% if (user) { %>
+        <% if (user.role === 'admin') { %>
+            <%- include('../partials/admin-header') %>
+        <% } else { %>
+            <%- include('../partials/user-header') %>
+        <% } %>
+    <% } else { %>
+        <%- include('../partials/header') %>
+    <% } %>
+
+    <main class="container" style="min-height: 80vh; padding: 2rem 0;">
+        <div class="animate-fade-in">
+            <div class="dashboard-header">
+                <h1 style="color: var(--white); margin-bottom: 0.5rem;">Hoş Geldiniz, <%= user.name %>!</h1>
+                <p style="color: #ccc;">Web sitesi siparişlerinizi yönetin ve takip edin</p>
+            </div>
+
+            <!-- İstatistik Kartları -->
+            <div class="stats-grid">
+                <div class="stat-card animate-slide-left delay-100">
+                    <div class="stat-number"><%= stats.totalOrders %></div>
+                    <div class="stat-label">Toplam Sipariş</div>
+                </div>
+                
+                <div class="stat-card animate-slide-left delay-200">
+                    <div class="stat-number"><%= stats.pendingOrders %></div>
+                    <div class="stat-label">Bekleyen Sipariş</div>
+                </div>
+                
+                <div class="stat-card animate-slide-left delay-300">
+                    <div class="stat-number"><%= stats.deliveredOrders %></div>
+                    <div class="stat-label">Teslim Edilen</div>
+                </div>
+                
+                <div class="stat-card animate-slide-left delay-400">
+                    <div class="stat-number"><%= unreadNotifications %></div>
+                    <div class="stat-label">Okunmamış Bildirim</div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Son Siparişler -->
+                <div class="col">
+                    <div class="dashboard-section">
+                        <h2 class="section-title">Son Siparişler</h2>
+                        
+                        <% if (recentOrders.length > 0) { %>
+                            <div class="card">
+                                <div class="table">
+                                    <table style="width: 100%;">
+                                        <thead>
+                                            <tr>
+                                                <th>Başlık</th>
+                                                <th>Durum</th>
+                                                <th>Tarih</th>
+                                                <th>İşlem</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <% recentOrders.forEach(order => { %>
+                                            <tr>
+                                                <td><%= order.title %></td>
+                                                <td>
+                                                    <span class="status-badge status-<%= order.status %>">
+                                                        <%
+                                                            const statusText = {
+                                                                'pending': 'Beklemede',
+                                                                'in_progress': 'Üretimde',
+                                                                'delivered': 'Teslim Edildi',
+                                                                'revision': 'Revizyonda',
+                                                                'cancelled': 'İptal Edildi'
+                                                            };
+                                                        %>
+                                                        <%= statusText[order.status] %>
+                                                    </span>
+                                                </td>
+                                                <td><%= new Date(order.createdAt).toLocaleDateString('tr-TR') %></td>
+                                                <td>
+                                                    <a href="/orders/<%= order._id %>" class="btn" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+                                                        Detay
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            <% }); %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        <% } else { %>
+                            <div class="card">
+                                <div style="text-align: center; padding: 2rem; color: #ccc;">
+                                    <p>Henüz siparişiniz bulunmuyor.</p>
+                                    <a href="/orders/create" class="btn" style="margin-top: 1rem;">
+                                        İlk Siparişini Oluştur
+                                    </a>
+                                </div>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Hızlı İşlemler -->
+                <div class="col">
+                    <div class="dashboard-section">
+                        <h2 class="section-title">Hızlı İşlemler</h2>
+                        
+                        <div class="card">
+                            <div style="display: grid; gap: 1rem;">
+                                <a href="/orders/create" class="btn hover-lift" style="text-align: center;">
+                                    🚀 Yeni Sipariş Oluştur
+                                </a>
+                                
+                                <a href="/user/orders" class="btn btn-outline hover-lift" style="text-align: center;">
+                                📋 Tüm Siparişlerimi Gör
+                                </a>
+                                
+                                <a href="/user/notifications" class="btn btn-outline hover-lift" style="text-align: center;">
+                                    🔔 Bildirimlerim
+                                    <% if (unreadNotifications > 0) { %>
+                                        <span style="background: var(--danger); color: white; border-radius: 50%; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; margin-left: 0.5rem;">
+                                            <%= unreadNotifications %>
+                                        </span>
+                                    <% } %>
+                                </a>
+                                
+                                <a href="/user/contact" class="btn btn-outline hover-lift" style="text-align: center;">
+                                    📞 İletişime Geç
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sistem Durumu -->
+                    <div class="dashboard-section">
+                        <h2 class="section-title">Sistem Durumu</h2>
+                        
+                        <div class="card">
+                            <div style="display: grid; gap: 1rem;">
+                                <div style="display: flex; justify-content: between; align-items: center;">
+                                    <span>Sipariş Alımı:</span>
+                                    <span style="color: var(--success);">✔ Aktif</span>
+                                </div>
+                                
+                                <div style="display: flex; justify-content: between; align-items: center;">
+                                    <span>Destek Sistemi:</span>
+                                    <span style="color: var(--success);">✔ 7/24 Aktif</span>
+                                </div>
+                                
+                                <div style="display: flex; justify-content: between; align-items: center;">
+                                    <span>Revizyon Sistemi:</span>
+                                    <span style="color: var(--success);">✔ Aktif</span>
+                                </div>
+                                
+                                <div style="display: flex; justify-content: between; align-items: center;">
+                                    <span>Sunucu Durumu:</span>
+                                    <span style="color: var(--success);">✔ Stabil</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <%- include('../partials/footer') %>
+
+    <script src="/js/main.js"></script>
+    <% if (user && user.role === 'admin') { %>
+        <script src="/js/admin.js"></script>
+    <% } else if (user) { %>
+        <script src="/js/user.js"></script>
+    <% } %>
+</body>
+</html>

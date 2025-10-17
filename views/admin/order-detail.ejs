@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sipariş Detayı - WebCreate</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/animations.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body>
+    <%- include('../partials/admin-header') %>
+
+    <main class="container" style="min-height: 80vh; padding: 2rem 0;">
+        <div class="animate-fade-in">
+            <!-- Üst Bilgi ve İşlemler -->
+            <div style="display: flex; justify-content: between; align-items: start; margin-bottom: 2rem; gap: 2rem; flex-wrap: wrap;">
+                <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                        <h1 style="color: var(--white); margin: 0;"><%= order.title %></h1>
+                        <span class="status-badge status-<%= order.status %>" style="font-size: 1.1rem;">
+                            <%
+                                const statusText = {
+                                    'pending': '⏳ Beklemede',
+                                    'in_progress': '🚀 Üretimde',
+                                    'delivered': '✅ Teslim Edildi',
+                                    'revision': '🔄 Revizyonda',
+                                    'cancelled': '❌ İptal Edildi'
+                                };
+                            %>
+                            <%= statusText[order.status] %>
+                        </span>
+                    </div>
+                    
+                    <p style="color: #ccc; line-height: 1.6; margin-bottom: 1.5rem;"><%= order.description %></p>
+                    
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <% if (order.price > 0) { %>
+                        <div style="background: var(--medium-gray); padding: 0.75rem 1rem; border-radius: 5px;">
+                            <strong style="color: var(--white);">💵 <%= order.price %> TL</strong>
+                        </div>
+                        <% } %>
+                        
+                        <% if (order.deadline) { %>
+                        <div style="background: var(--medium-gray); padding: 0.75rem 1rem; border-radius: 5px;">
+                            <strong style="color: var(--white);">📅 <%= new Date(order.deadline).toLocaleDateString('tr-TR') %></strong>
+                        </div>
+                        <% } %>
+                        
+                        <div style="background: var(--medium-gray); padding: 0.75rem 1rem; border-radius: 5px;">
+                            <strong style="color: var(--white);">👤 <%= order.user.name %></strong>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <a href="/admin/orders" class="btn btn-outline">
+                        ← Siparişlere Dön
+                    </a>
+                    
+                    <button onclick="updateOrderStatus()" class="btn">
+                        ✏️ Durumu Güncelle
+                    </button>
+                    
+                    <% if (order.status === 'in_progress' || order.status === 'revision') { %>
+                    <button onclick="openDeliveryModal()" class="btn btn-success">
+                        📦 Teslim Et
+                    </button>
+                    <% } %>
+                    
+                    <button onclick="sendMessageToUser()" class="btn btn-outline">
+                        💬 Mesaj Gönder
+                    </button>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Sol Kolon -->
+                <div class="col">
+                    <!-- Sipariş Bilgileri -->
+                    <div class="card">
+                        <h3 style="color: var(--white); margin-bottom: 1.5rem;">📋 Sipariş Bilgileri</h3>
+                        
+                        <div style="display: grid; gap: 1rem;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div>
+                                    <label style="color: #ccc; font-size: 0.875rem; display: block; margin-bottom: 0.25rem;">Sipariş ID</label>
+                                    <div style="color: var(--white); font-family: monospace;">
+                                        #<%= order._id.toString().substring(18, 24) %>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label style="color: #ccc; font-size: 0.875rem; display: block; margin-bottom: 0.25rem;">Öncelik</label>
+                                    <div style="color: var(--white);">
+                                        <%
+                                            const priorityText = {
+                                                'low': '🔵 Düşük',
+                                                'medium': '🟡 Orta',
+                                                'high': '🟠 Yüksek',
+                                                'urgent': '🔴 Acil'
+                                            };
+                                        %>
+                                        <%= priorityText[order.priority] %>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div>
+                                    <label style="color: #ccc; font-size: 0.875rem; display: block; margin-bottom: 0.25rem;">Oluşturulma</label>
+                                    <div style="color: var(--white);">
+                                        <%= new Date(order.createdAt).toLocaleDateString('tr-TR') %>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label style="color: #ccc; font-size: 0.875rem; display: block; margin-bottom: 0.25rem;">Son Güncelleme</label>
+                                    <div style="color: var(--white);">
+                                        <%= new Date(order.updatedAt).toLocaleDateString('tr-TR') %>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <% if (order.tags && order.tags.length > 0) { %>
+                            <div>
+                                <label style="color: #ccc; font-size: 0.875rem; display: block; margin-bottom: 0.25rem;">Etiketler</label>
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    <% order.tags.forEach(tag => { %>
+                                    <span style="background: var(--accent); color: white; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.875rem;">
+                                        <%= tag %>
+                                    </span>
+                                    <% }); %>
+                                </div>
+                            </div>
+                            <% } %>
+                            
+                            <% if (order.adminNotes) { %>
+                            <div>
+                                <label style="color: #ccc; font-size: 0.875rem; display: block; margin-bottom: 0.25rem;">Admin Notları</label>
+                                <div style="color: var(--white); background: var(--medium-gray); padding: 1rem; border-radius: 5px; line-height: 1.6;">
+                                    <%= order.adminNotes %>
+                                </div>
+                            </div>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Kullanıcı Bilgileri -->
+                    <div class="card">
+                        <h3 style="color: var(--white); margin-bottom: 1.5rem;">👤 Kullanıcı Bilgileri</h3>
+                        
+                        <div style="display: flex; gap: 1.5rem; align-items: start;">
+                            <div style="width: 60px; height: 60px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: white; font-weight: bold;">
+                                <%= order.user.name.charAt(0).toUpperCase() %>
+                            </div>
+                            
+                            <div style="flex: 1;">
+                                <div style="color: var(--white); font-weight: 500; font-size: 1.1rem; margin-bottom: 0.5rem;">
+                                    <%= order.user.name %>
+                                </div>
+                                
+                                <div style="color: #ccc; margin-bottom: 0.5rem;">
+                                    📧 <%= order.user.email %>
+                                </div>
+                                
+                                <% if (order.user.phone) { %>
+                                <div style="color: #ccc; margin-bottom: 0.5rem;">
+                                    📞 <%= order.user.phone %>
+                                </div>
+                                <% } %>
+                                
+                                <% if (order.user.company) { %>
+                                <div style="color: #ccc; margin-bottom: 1rem;">
+                                    🏢 <%= order.user.company %>
+                                </div>
+                                <% } %>
+                                
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <button onclick="viewUserOrders('<%= order.user._id %>')" class="btn btn-outline" style="padding: 0.5rem 1rem;">
+                                        📦 Siparişleri
+                                    </button>
+                                    <button onclick="sendMessageToUser()" class="btn" style="padding: 0.5rem 1rem;">
+                                        💬 Mesaj Gönder
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Yüklenen Dosyalar -->
+                    <div class="card">
+                        <h3 style="color: var(--white); margin-bottom: 1.5rem;">📎 Kullanıcı Dosyaları</h3>
+                        
+                        <% if (order.files && order.files.length > 0) { %>
+                            <div style="display: grid; gap: 0.75rem;">
+                                <% order.files.forEach((file, index) => { %>
+                                <div style="display: flex; justify-content: between; align-items: center; padding: 1rem; background: var(--medium-gray); border-radius: 5px;">
+                                    <div style="display: flex; align-items: center; gap: 1rem;">
+                                        <div style="font-size: 1.5rem;">
+                                            <%= getFileIcon(file.originalName) %>
+                                        </div>
+                                        <div>
+                                            <div style="color: var(--white); font-weight: 500;"><%= file.originalName %></div>
+                                            <div style="color: #ccc; font-size: 0.875rem;">
+                                                <%= new Date(file.uploadedAt).toLocaleDateString('tr-TR') %>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <a href="/files/download/<%= file.filename %>" class="btn" style="padding: 0.5rem 1rem;">
+                                            📥 İndir
+                                        </a>
+                                        <button onclick="previewFile('<%= file.filename %>')" class="btn btn-outline" style="padding: 0.5rem 1rem;">
+                                            👁️ Önizleme
+                                        </button>
+                                    </div>
+                                </div>
+                                <% }); %>
+                            </div>
+                        <% } else { %>
+                            <div style="text-align: center; padding: 2rem; color: #ccc;">
+                                <p>Kullanıcı henüz dosya yüklememiş.</p>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Sağ Kolon -->
+                <div class="col">
+                    <!-- Teslim Edilen Dosyalar -->
+                    <% if (order.deliveryFiles && order.deliveryFiles.length > 0) { %>
+                    <div class="card">
+                        <h3 style="color: var(--white); margin-bottom: 1.5rem;">🎁 Teslim Edilen Dosyalar</h3>
+                        
+                        <div style="display: grid; gap: 0.75rem;">
+                            <% order.deliveryFiles.forEach((file, index) => { %>
+                            <div style="display: flex; justify-content: between; align-items: center; padding: 1rem; background: var(--medium-gray); border-radius: 5px; border-left: 4px solid var(--success);">
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <div style="font-size: 1.5rem;">
+                                        <%= getFileIcon(file.originalName) %>
+                                    </div>
+                                    <div>
+                                        <div style="color: var(--white); font-weight: 500;"><%= file.originalName %></div>
+                                        <div style="color: #ccc; font-size: 0.875rem;">
+                                            <%= new Date(file.deliveredAt).toLocaleDateString('tr-TR') %>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <a href="/files/download/<%= file.filename %>" class="btn btn-success" style="padding: 0.5rem 1rem;">
+                                    📥 İndir
+                                </a>
+                            </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                    <% } %>
+
+                    <!-- Revizyon İsteği -->
+                    <% if (order.revisionRequest && order.revisionRequest.requested) { %>
+                    <div class="card">
+                        <h3 style="color: var(--white); margin-bottom: 1.5rem;">🔄 Revizyon İsteği</h3>
+                        
+                        <div style="background: var(--medium-gray); padding: 1.5rem; border-radius: 5px; border-left: 4px solid var(--warning);">
+                            <div style="margin-bottom: 1rem;">
+                                <strong style="color: var(--white); display: block; margin-bottom: 0.5rem;">Kullanıcı Açıklaması:</strong>
+                                <p style="color: #ccc; line-height: 1.6;"><%= order.revisionRequest.description %></p>
+                            </div>
+                            
+                            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 1rem;">
+                                <div>
+                                    <span class="status-badge status-<%= order.revisionRequest.status %>">
+                                        <%
+                                            const revisionStatus = {
+                                                'pending': '⏳ Beklemede',
+                                                'accepted': '✅ Kabul Edildi',
+                                                'rejected': '❌ Reddedildi',
+                                                'counter_offer': '💡 Karşı Teklif'
+                                            };
+                                        %>
+                                        <%= revisionStatus[order.revisionRequest.status] %>
+                                    </span>
+                                </div>
+                                
+                                <div style="color: #ccc; font-size: 0.875rem;">
+                                    <%= new Date(order.revisionRequest.requestedAt).toLocaleDateString('tr-TR') %>
+                                </div>
+                            </div>
+                            
+                            <% if (order.revisionRequest.counterOffer) { %>
+                            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--light-gray);">
+                                <strong style="color: var(--white); display: block; margin-bottom: 0.5rem;">Admin Yanıtı:</strong>
+                                <p style="color: #ccc; line-height: 1.6;"><%= order.revisionRequest.counterOffer %></p>
+                            </div>
+                            <% } %>
+                            
+                            <% if (order.revisionRequest.status === 'pending') { %>
+                            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                                <button onclick="acceptRevision('<%= order._id %>')" class="btn btn-success" style="flex: 1;">
+                                    ✅ Kabul Et
+                                </button>
+                                <button onclick="rejectRevision('<%= order._id %>')" class="btn btn-danger" style="flex: 1;">
+                                    ❌ Reddet
+                                </button>
+                                <button onclick="counterOfferRevision('<%= order._id %>')" class="btn btn-outline" style="flex: 1;">
+                                    💡 Karşı Teklif
+                                </button>
+                            </div>
+                            <% } %>
+                        </div>
+                    </div>
+                    <% } %>
+
+                    <!-- İptal Nedeni -->
+                    <% if (order.status === 'cancelled' && order.cancellationReason) { %>
+                    <div class="card">
+                        <h3 style="color: var(--white); margin-bottom: 1.5rem;">❌ İptal Nedeni</h3>
+                        
+                        <div style="background: rgba(220, 53, 69, 0.1); padding: 1.5rem; border-radius: 5px; border-left: 4px solid var(--danger);">
+                            <p style="color: #ccc; line-height: 1.6; margin: 0;"><%= order.cancellationReason %></p>
+                        </div>
+                    </div>
+                    <% } %>
+
+                    <!-- Hızlı İşlemler -->
+                    <div class="card">
+                        <h3 style="color: var(--white); margin-bottom: 1.5rem;">⚡ Hızlı İşlemler</h3>
+                        
+                        <div style="display: grid; gap: 1rem;">
+                            <button onclick="updateOrderStatus()" class="btn hover-lift" style="text-align: left; padding: 1rem;">
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <span style="font-size: 1.2rem;">✏️</span>
+                                    <div>
+                                        <div style="color: var(--white); font-weight: 500;">Durumu Güncelle</div>
+                                        <div style="color: #ccc; font-size: 0.875rem;">Sipariş durumunu değiştir</div>
+                                    </div>
+                                </div>
+                            </button>
+                            
+                            <% if (order.status === 'in_progress' || order.status === 'revision') { %>
+                            <button onclick="openDeliveryModal()" class="btn btn-success hover-lift" style="text-align: left; padding: 1rem;">
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <span style="font-size: 1.2rem;">📦</span>
+                                    <div>
+                                        <div style="color: var(--white); font-weight: 500;">Teslim Et</div>
+                                        <div style="color: #ccc; font-size: 0.875rem;">Dosyaları kullanıcıya teslim et</div>
+                                    </div>
+                                </div>
+                            </button>
+                            <% } %>
+                            
+                            <button onclick="addAdminNotes()" class="btn btn-outline hover-lift" style="text-align: left; padding: 1rem;">
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <span style="font-size: 1.2rem;">📝</span>
+                                    <div>
+                                        <div style="color: var(--white); font-weight: 500;">Not Ekle</div>
+                                        <div style="color: #ccc; font-size: 0.875rem;">İç not ekle veya düzenle</div>
+                                    </div>
+                                </div>
+                            </button>
+                            
+                            <button onclick="sendMessageToUser()" class="btn btn-outline hover-lift" style="text-align: left; padding: 1rem;">
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <span style="font-size: 1.2rem;">💬</span>
+                                    <div>
+                                        <div style="color: var(--white); font-weight: 500;">Mesaj Gönder</div>
+                                        <div style="color: #ccc; font-size: 0.875rem;">Kullanıcıya mesaj gönder</div>
+                                    </div>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <%- include('../partials/footer') %>
+
+    <script src="/js/main.js"></script>
+    <script src="/js/admin.js"></script>
+
+    <!-- Durum Güncelleme Modal -->
+    <div id="statusModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="card" style="max-width: 500px; width: 90%;">
+            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="color: var(--white); margin: 0;">Sipariş Durumu Güncelle</h3>
+                <button onclick="closeStatusModal()" style="background: none; border: none; color: #ccc; font-size: 1.5rem; cursor: pointer;">×</button>
+            </div>
+            
+            <form id="statusForm">
+                <input type="hidden" id="statusOrderId" value="<%= order._id %>">
+                
+                <div class="form-group">
+                    <label class="form-label">Yeni Durum</label>
+                    <select id="newStatus" class="form-control" required>
+                        <option value="">Durum seçin</option>
+                        <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>⏳ Beklemede</option>
+                        <option value="in_progress" <%= order.status === 'in_progress' ? 'selected' : '' %>>🚀 Üretimde</option>
+                        <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>✅ Teslim Edildi</option>
+                        <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>❌ İptal Edildi</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="priceGroup" style="display: none;">
+                    <label for="orderPrice" class="form-label">Fiyat (TL)</label>
+                    <input type="number" id="orderPrice" class="form-control" min="0" step="0.01" value="<%= order.price || '' %>">
+                </div>
+                
+                <div class="form-group" id="deadlineGroup" style="display: none;">
+                    <label for="orderDeadline" class="form-label">Teslim Tarihi</label>
+                    <input type="date" id="orderDeadline" class="form-control" value="<%= order.deadline ? new Date(order.deadline).toISOString().split('T')[0] : '' %>">
+                </div>
+                
+                <div class="form-group" id="cancellationGroup" style="display: none;">
+                    <label for="cancellationReason" class="form-label">İptal Nedeni</label>
+                    <textarea id="cancellationReason" class="form-control" rows="3" placeholder="İptal nedenini açıklayın..."><%= order.cancellationReason || '' %></textarea>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" onclick="closeStatusModal()" class="btn btn-outline" style="flex: 1;">
+                        İptal
+                    </button>
+                    <button type="submit" class="btn" style="flex: 1;">
+                        📝 Güncelle
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Teslim Modal -->
+    <div id="deliveryModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="card" style="max-width: 600px; width: 90%;">
+            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="color: var(--white); margin: 0;">Siparişi Teslim Et</h3>
+                <button onclick="closeDeliveryModal()" style="background: none; border: none; color: #ccc; font-size: 1.5rem; cursor: pointer;">×</button>
+            </div>
+            
+            <form id="deliveryForm" enctype="multipart/form-data">
+                <input type="hidden" name="orderId" value="<%= order._id %>">
+                
+                <div class="form-group">
+                    <label class="form-label">Teslim Dosyaları</label>
+                    <div class="file-upload" onclick="document.getElementById('deliveryFiles').click()" style="cursor: pointer;">
+                        <div style="font-size: 2rem; margin-bottom: 1rem;">📁</div>
+                        <h4 style="color: var(--white); margin-bottom: 0.5rem;">Dosyaları Buraya Sürükleyin veya Tıklayın</h4>
+                        <p style="color: #ccc; margin-bottom: 1rem;">
+                            Tamamlanmış web sitesi dosyalarını yükleyin
+                        </p>
+                        <input 
+                            type="file" 
+                            id="deliveryFiles" 
+                            name="deliveryFiles" 
+                            multiple 
+                            style="display: none;"
+                        >
+                    </div>
+                    <div id="deliveryFilePreview" style="margin-top: 1rem;"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="deliveryNotes" class="form-label">Teslim Notları (Opsiyonel)</label>
+                    <textarea 
+                        id="deliveryNotes" 
+                        name="deliveryNotes" 
+                        class="form-control" 
+                        rows="3"
+                        placeholder="Teslim ile ilgili notlarınız..."
+                    ></textarea>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" onclick="closeDeliveryModal()" class="btn btn-outline" style="flex: 1;">
+                        İptal
+                    </button>
+                    <button type="submit" class="btn btn-success" style="flex: 1;">
+                        📦 Teslim Et
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    function getFileIcon(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        const icons = {
+            'zip': '📦', 'rar': '📦', 'pdf': '📄',
+            'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️',
+            'doc': '📝', 'docx': '📝', 'html': '🌐',
+            'css': '🎨', 'js': '⚡', 'php': '🐘'
+        };
+        return icons[ext] || '📄';
+    }
+
+    function updateOrderStatus() {
+        document.getElementById('statusModal').style.display = 'flex';
+    }
+
+    function closeStatusModal() {
+        document.getElementById('statusModal').style.display = 'none';
+    }
+
+    function openDeliveryModal() {
+        document.getElementById('deliveryModal').style.display = 'flex';
+    }
+
+    function closeDeliveryModal() {
+        document.getElementById('deliveryModal').style.display = 'none';
+        document.getElementById('deliveryForm').reset();
+        document.getElementById('deliveryFilePreview').innerHTML = '';
+    }
+
+    function viewUserOrders(userId) {
+        window.location.href = `/admin/orders?user=${userId}`;
+    }
+
+    function sendMessageToUser() {
+        showNotification('Mesaj gönderme özelliği yakında eklenecek!', 'info');
+    }
+
+    function previewFile(filename) {
+        window.open(`/files/preview/${filename}`, '_blank');
+    }
+
+    function addAdminNotes() {
+        const currentNotes = `<%= order.adminNotes || '' %>`;
+        const newNotes = prompt('Admin notlarını girin:', currentNotes);
+        
+        if (newNotes !== null) {
+            // Admin notlarını güncelleme işlemi burada yapılacak
+            showNotification('Admin notları güncellendi!', 'success');
+        }
+    }
+
+    // Revizyon işlemleri
+    function acceptRevision(orderId) {
+        if (confirm('Bu revizyon isteğini kabul etmek istediğinizden emin misiniz?')) {
+            submitRevisionDecision(orderId, 'accepted');
+        }
+    }
+
+    function rejectRevision(orderId) {
+        const reason = prompt('Reddetme nedeninizi belirtin:');
+        if (reason !== null) {
+            submitRevisionDecision(orderId, 'rejected', reason);
+        }
+    }
+
+    function counterOfferRevision(orderId) {
+        const offer = prompt('Karşı teklifinizi belirtin:');
+        if (offer !== null) {
+            submitRevisionDecision(orderId, 'counter_offer', offer);
+        }
+    }
+
+    async function submitRevisionDecision(orderId, decision, message = '') {
+        try {
+            const response = await fetch(`/admin/revisions/${orderId}/decision`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    decision,
+                    counterOffer: message
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showNotification('Revizyon kararı gönderildi!', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showNotification(data.error || 'Karar gönderilirken bir hata oluştu!', 'error');
+            }
+        } catch (error) {
+            console.error('Revizyon kararı gönderme hatası:', error);
+            showNotification('İşlem sırasında bir hata oluştu!', 'error');
+        }
+    }
+
+    // Durum güncelleme formu
+    document.getElementById('statusForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const orderId = document.getElementById('statusOrderId').value;
+        const status = document.getElementById('newStatus').value;
+        const price = document.getElementById('orderPrice').value;
+        const deadline = document.getElementById('orderDeadline').value;
+        const cancellationReason = document.getElementById('cancellationReason').value;
+        
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = '⏳ Güncelleniyor...';
+        submitBtn.disabled = true;
+        
+        try {
+            const response = await fetch(`/admin/orders/${orderId}/status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    status,
+                    price: price || undefined,
+                    deadline: deadline || undefined,
+                    cancellationReason: cancellationReason || undefined
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showNotification('Sipariş durumu başarıyla güncellendi!', 'success');
+                closeStatusModal();
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showNotification(data.error || 'Durum güncellenirken bir hata oluştu!', 'error');
+                submitBtn.innerHTML = '📝 Güncelle';
+                submitBtn.disabled = false;
+            }
+        } catch (error) {
+            console.error('Durum güncelleme hatası:', error);
+            showNotification('İşlem sırasında bir hata oluştu!', 'error');
+            submitBtn.innerHTML = '📝 Güncelle';
+            submitBtn.disabled = false;
+        }
+    });
+
+    // Teslim formu
+    document.getElementById('deliveryForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const submitBtn = this.querySelector('button[type="submit"]');
+        
+        submitBtn.innerHTML = '⏳ Teslim Ediliyor...';
+        submitBtn.disabled = true;
+        
+        try {
+            const response = await fetch(`/admin/orders/${formData.get('orderId')}/deliver`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showNotification('Sipariş başarıyla teslim edildi!', 'success');
+                closeDeliveryModal();
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showNotification(data.error || 'Teslim sırasında bir hata oluştu!', 'error');
+                submitBtn.innerHTML = '📦 Teslim Et';
+                submitBtn.disabled = false;
+            }
+        } catch (error) {
+            console.error('Teslim hatası:', error);
+            showNotification('İşlem sırasında bir hata oluştu!', 'error');
+            submitBtn.innerHTML = '📦 Teslim Et';
+            submitBtn.disabled = false;
+        }
+    });
+
+    // Dosya yükleme önizleme
+    document.getElementById('deliveryFiles').addEventListener('change', function(e) {
+        const preview = document.getElementById('deliveryFilePreview');
+        preview.innerHTML = '';
+        
+        if (this.files.length > 0) {
+            const fileList = document.createElement('div');
+            fileList.style.cssText = 'display: grid; gap: 0.5rem;';
+            
+            Array.from(this.files).forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.style.cssText = 'display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--medium-gray); border-radius: 5px;';
+                
+                fileItem.innerHTML = `
+                    <div style="font-size: 1.5rem;">${getFileIcon(file.name)}</div>
+                    <div style="flex: 1;">
+                        <div style="color: var(--white); font-weight: 500;">${file.name}</div>
+                        <div style="color: #ccc; font-size: 0.875rem;">${formatFileSize(file.size)}</div>
+                    </div>
+                    <button type="button" onclick="removeDeliveryFile(${index})" style="background: var(--danger); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer;">
+                        ×
+                    </button>
+                `;
+                
+                fileList.appendChild(fileItem);
+            });
+            
+            preview.appendChild(fileList);
+        }
+    });
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function removeDeliveryFile(index) {
+        const input = document.getElementById('deliveryFiles');
+        const files = Array.from(input.files);
+        files.splice(index, 1);
+        
+        const newFileList = new DataTransfer();
+        files.forEach(file => newFileList.items.add(file));
+        input.files = newFileList.files;
+        
+        input.dispatchEvent(new Event('change'));
+    }
+
+    // Durum değişikliğine göre alanları göster/gizle
+    document.getElementById('newStatus').addEventListener('change', function(e) {
+        hideAllOptionGroups();
+        
+        switch(e.target.value) {
+            case 'in_progress':
+                document.getElementById('priceGroup').style.display = 'block';
+                document.getElementById('deadlineGroup').style.display = 'block';
+                break;
+            case 'cancelled':
+                document.getElementById('cancellationGroup').style.display = 'block';
+                break;
+        }
+    });
+
+    function hideAllOptionGroups() {
+        document.getElementById('priceGroup').style.display = 'none';
+        document.getElementById('deadlineGroup').style.display = 'none';
+        document.getElementById('cancellationGroup').style.display = 'none';
+    }
+
+    // Modal dışına tıklayınca kapatma
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                if (this.id === 'statusModal') closeStatusModal();
+                if (this.id === 'deliveryModal') closeDeliveryModal();
+            }
+        });
+    });
+
+    // Sayfa yüklendiğinde mevcut duruma göre alanları göster
+    document.addEventListener('DOMContentLoaded', function() {
+        if (document.getElementById('newStatus').value === 'in_progress') {
+            document.getElementById('priceGroup').style.display = 'block';
+            document.getElementById('deadlineGroup').style.display = 'block';
+        }
+    });
+    </script>
+</body>
+</html>

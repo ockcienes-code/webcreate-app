@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kullanıcı Yönetimi - WebCreate</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/animations.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body>
+    <!-- Header -->
+    <% if (user) { %>
+        <% if (user.role === 'admin') { %>
+            <%- include('../partials/admin-header') %>
+        <% } else { %>
+            <%- include('../partials/user-header') %>
+        <% } %>
+    <% } else { %>
+        <%- include('../partials/header') %>
+    <% } %>
+
+    <main class="container" style="min-height: 80vh; padding: 2rem 0;">
+        <div class="animate-fade-in">
+            <!-- Başlık ve Arama -->
+            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h1 style="color: var(--white); margin-bottom: 0.5rem;">Kullanıcı Yönetimi</h1>
+                    <p style="color: #ccc;">Sistemde kayıtlı tüm kullanıcılar</p>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <div style="position: relative;">
+                        <input 
+                            type="text" 
+                            id="userSearch" 
+                            placeholder="Kullanıcı ara..."
+                            class="form-control" 
+                            style="padding-left: 2.5rem; width: 300px;"
+                        >
+                        <span style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #ccc;">🔍</span>
+                    </div>
+                    
+                    <select id="userFilter" class="form-control" style="width: 200px;">
+                        <option value="all">Tüm Kullanıcılar</option>
+                        <option value="recent">Son 7 Gün</option>
+                        <option value="active">Aktif Kullanıcılar</option>
+                        <option value="inactive">Pasif Kullanıcılar</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Toplu İşlemler -->
+            <div id="userBulkActions" class="card" style="display: none; margin-bottom: 1.5rem; background: var(--medium-gray);">
+                <div style="display: flex; justify-content: between; align-items: center;">
+                    <div>
+                        <strong style="color: var(--white);">
+                            <span id="selectedUsersCount">0</span> kullanıcı seçildi
+                        </strong>
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <button onclick="exportSelectedUsers()" class="btn btn-outline" style="padding: 0.5rem 1rem;">
+                            📊 Seçilenleri Dışa Aktar
+                        </button>
+                        <button onclick="deleteSelectedUsers()" class="btn btn-danger" style="padding: 0.5rem 1rem;">
+                            🗑️ Seçilenleri Sil
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kullanıcı Tablosu -->
+            <div class="card">
+                <div class="table">
+                    <table style="width: 100%;" id="usersTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 30px;">
+                                    <input type="checkbox" id="selectAllUsers" class="user-checkbox">
+                                </th>
+                                <th>Kullanıcı Bilgisi</th>
+                                <th>İletişim</th>
+                                <th>Şirket</th>
+                                <th>Kayıt Tarihi</th>
+                                <th>Son Aktivite</th>
+                                <th>Durum</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (users.length > 0) { %>
+                                <% users.forEach(user => { %>
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" class="user-checkbox" value="<%= user._id %>">
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <div style="color: var(--white); font-weight: 500;"><%= user.name %></div>
+                                            <div style="color: #ccc; font-size: 0.875rem;">ID: <%= user._id.toString().substring(0, 8) %>...</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <div style="color: var(--white);">📧 <%= user.email %></div>
+                                            <% if (user.phone) { %>
+                                            <div style="color: #ccc; font-size: 0.875rem;">📞 <%= user.phone %></div>
+                                            <% } %>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <% if (user.company) { %>
+                                            <span style="color: var(--white);"><%= user.company %></span>
+                                        <% } else { %>
+                                            <span style="color: #ccc;">-</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <span style="color: #ccc;">
+                                            <%= new Date(user.createdAt).toLocaleDateString('tr-TR') %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span style="color: #ccc;">
+                                            <%= new Date(user.updatedAt).toLocaleDateString('tr-TR') %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-active">
+                                            🟢 Aktif
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                            <button onclick="viewUserDetails('<%= user._id %>')" class="btn" style="padding: 0.25rem 0.5rem;" title="Detayları Gör">
+                                                👁️
+                                            </button>
+                                            <button onclick="editUser('<%= user._id %>')" class="btn btn-outline" style="padding: 0.25rem 0.5rem;" title="Düzenle">
+                                                ✏️
+                                            </button>
+                                            <button onclick="viewUserOrders('<%= user._id %>')" class="btn btn-outline" style="padding: 0.25rem 0.5rem;" title="Siparişleri Gör">
+                                                📦
+                                            </button>
+                                            <button onclick="deleteUser('<%= user._id %>')" class="btn btn-danger" style="padding: 0.25rem 0.5rem;" title="Sil">
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="8" style="text-align: center; padding: 3rem; color: #ccc;">
+                                        <div style="font-size: 3rem; margin-bottom: 1rem;">👥</div>
+                                        <h3 style="color: var(--white); margin-bottom: 0.5rem;">Henüz kullanıcı bulunmuyor</h3>
+                                        <p>Kullanıcılar burada listelenecek</p>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sayfalama -->
+            <% if (users.length > 0) { %>
+            <div style="display: flex; justify-content: between; align-items: center; margin-top: 2rem;">
+                <div style="color: #ccc;">
+                    Toplam <strong><%= users.length %></strong> kullanıcı
+                </div>
+                
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <button class="btn btn-outline">← Önceki</button>
+                    <span style="color: #ccc; padding: 0.5rem 1rem;">Sayfa 1</span>
+                    <button class="btn btn-outline">Sonraki →</button>
+                </div>
+            </div>
+            <% } %>
+        </div>
+    </main>
+
+    <%- include('../partials/footer') %>
+
+    <script src="/js/main.js"></script>
+    <% if (user && user.role === 'admin') { %>
+        <script src="/js/admin.js"></script>
+    <% } else if (user) { %>
+        <script src="/js/user.js"></script>
+    <% } %>
+
+    <!-- Kullanıcı Detay Modal -->
+    <div id="userDetailModal" class="modal" style="display: none;">
+        <div class="card" style="max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="color: var(--white); margin: 0;">Kullanıcı Detayları</h3>
+                <button onclick="closeUserModal()" style="background: none; border: none; color: #ccc; font-size: 1.5rem; cursor: pointer;">×</button>
+            </div>
+            
+            <div id="userDetailContent">
+                <!-- Kullanıcı detayları buraya yüklenecek -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Kullanıcı arama
+    document.getElementById('userSearch').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('#usersTable tbody tr');
+        
+        rows.forEach(row => {
+            const userName = row.cells[1].textContent.toLowerCase();
+            const userEmail = row.cells[2].textContent.toLowerCase();
+            
+            if (userName.includes(searchTerm) || userEmail.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+    // Kullanıcı filtreleme
+    document.getElementById('userFilter').addEventListener('change', function(e) {
+        // Filtreleme işlemi burada yapılacak
+        console.log('Filtre:', e.target.value);
+    });
+
+    // Toplu seçim
+    document.getElementById('selectAllUsers').addEventListener('change', function(e) {
+        const checkboxes = document.querySelectorAll('.user-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = e.target.checked;
+        });
+        toggleBulkActions();
+    });
+
+    // Bireysel checkbox değişiklikleri
+    document.querySelectorAll('.user-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', toggleBulkActions);
+    });
+
+    function toggleBulkActions() {
+        const selectedCount = document.querySelectorAll('.user-checkbox:checked:not(#selectAllUsers)').length;
+        const bulkActions = document.getElementById('userBulkActions');
+        
+        if (selectedCount > 0) {
+            bulkActions.style.display = 'block';
+            document.getElementById('selectedUsersCount').textContent = selectedCount;
+        } else {
+            bulkActions.style.display = 'none';
+        }
+    }
+
+    // Kullanıcı detaylarını görüntüle
+    async function viewUserDetails(userId) {
+        try {
+            const response = await fetch(`/admin/users/${userId}/details`);
+            const user = await response.json();
+            
+            document.getElementById('userDetailContent').innerHTML = `
+                <div style="display: grid; gap: 1.5rem;">
+                    <div style="display: flex; gap: 2rem; align-items: start;">
+                        <div style="width: 80px; height: 80px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: white;">
+                            ${user.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div style="flex: 1;">
+                            <h4 style="color: var(--white); margin-bottom: 0.5rem;">${user.name}</h4>
+                            <p style="color: #ccc; margin-bottom: 0.5rem;">📧 ${user.email}</p>
+                            ${user.phone ? `<p style="color: #ccc; margin-bottom: 0.5rem;">📞 ${user.phone}</p>` : ''}
+                            ${user.company ? `<p style="color: #ccc;">🏢 ${user.company}</p>` : ''}
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div style="background: var(--dark-gray); padding: 1rem; border-radius: 5px;">
+                            <div style="color: #ccc; font-size: 0.875rem;">Kayıt Tarihi</div>
+                            <div style="color: var(--white); font-weight: 500;">${new Date(user.createdAt).toLocaleDateString('tr-TR')}</div>
+                        </div>
+                        <div style="background: var(--dark-gray); padding: 1rem; border-radius: 5px;">
+                            <div style="color: #ccc; font-size: 0.875rem;">Son Giriş</div>
+                            <div style="color: var(--white); font-weight: 500;">${new Date(user.updatedAt).toLocaleDateString('tr-TR')}</div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h5 style="color: var(--white); margin-bottom: 1rem;">İstatistikler</h5>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                            <div style="text-align: center; background: var(--dark-gray); padding: 1rem; border-radius: 5px;">
+                                <div style="color: var(--accent); font-size: 1.5rem; font-weight: bold;">${user.orderCount || 0}</div>
+                                <div style="color: #ccc; font-size: 0.875rem;">Toplam Sipariş</div>
+                            </div>
+                            <div style="text-align: center; background: var(--dark-gray); padding: 1rem; border-radius: 5px;">
+                                <div style="color: var(--success); font-size: 1.5rem; font-weight: bold;">${user.completedOrders || 0}</div>
+                                <div style="color: #ccc; font-size: 0.875rem;">Tamamlanan</div>
+                            </div>
+                            <div style="text-align: center; background: var(--dark-gray); padding: 1rem; border-radius: 5px;">
+                                <div style="color: var(--warning); font-size: 1.5rem; font-weight: bold;">${user.pendingOrders || 0}</div>
+                                <div style="color: #ccc; font-size: 0.875rem;">Bekleyen</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('userDetailModal').style.display = 'flex';
+        } catch (error) {
+            console.error('Kullanıcı detay yükleme hatası:', error);
+            showNotification('Kullanıcı detayları yüklenirken bir hata oluştu!', 'error');
+        }
+    }
+
+    function closeUserModal() {
+        document.getElementById('userDetailModal').style.display = 'none';
+    }
+
+    // Kullanıcı düzenle
+    function editUser(userId) {
+        showNotification('Kullanıcı düzenleme özelliği yakında eklenecek!', 'info');
+    }
+
+    // Kullanıcı siparişlerini görüntüle
+    function viewUserOrders(userId) {
+        window.location.href = `/admin/orders?user=${userId}`;
+    }
+
+    // Kullanıcı silme
+    async function deleteUser(userId) {
+        if (confirm('Bu kullanıcıyı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz ve kullanıcının tüm siparişleri de silinecektir.')) {
+            try {
+                const response = await fetch(`/admin/users/${userId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    showNotification('Kullanıcı başarıyla silindi!', 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    const data = await response.json();
+                    showNotification(data.error || 'Kullanıcı silinirken bir hata oluştu!', 'error');
+                }
+            } catch (error) {
+                console.error('Kullanıcı silme hatası:', error);
+                showNotification('Kullanıcı silinirken bir hata oluştu!', 'error');
+            }
+        }
+    }
+
+    // Seçilen kullanıcıları dışa aktar
+    function exportSelectedUsers() {
+        const selectedUsers = Array.from(document.querySelectorAll('.user-checkbox:checked:not(#selectAllUsers)'))
+            .map(checkbox => checkbox.value);
+        
+        if (selectedUsers.length === 0) {
+            showNotification('Lütfen dışa aktarmak için kullanıcı seçin!', 'warning');
+            return;
+        }
+        
+        showNotification(`${selectedUsers.length} kullanıcı dışa aktarılıyor...`, 'info');
+        // Dışa aktarma işlemi burada yapılacak
+    }
+
+    // Seçilen kullanıcıları sil
+    async function deleteSelectedUsers() {
+        const selectedUsers = Array.from(document.querySelectorAll('.user-checkbox:checked:not(#selectAllUsers)'))
+            .map(checkbox => checkbox.value);
+        
+        if (selectedUsers.length === 0) {
+            showNotification('Lütfen silmek için kullanıcı seçin!', 'warning');
+            return;
+        }
+        
+        if (confirm(`${selectedUsers.length} kullanıcıyı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!`)) {
+            try {
+                const response = await fetch('/admin/users/bulk-delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ userIds: selectedUsers })
+                });
+                
+                if (response.ok) {
+                    showNotification(`${selectedUsers.length} kullanıcı başarıyla silindi!`, 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                }
+            } catch (error) {
+                console.error('Toplu kullanıcı silme hatası:', error);
+                showNotification('Kullanıcılar silinirken bir hata oluştu!', 'error');
+            }
+        }
+    }
+
+    // Modal dışına tıklayınca kapatma
+    document.getElementById('userDetailModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeUserModal();
+        }
+    });
+    </script>
+
+    <style>
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        z-index: 1000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .user-checkbox {
+        transform: scale(1.2);
+    }
+    </style>
+</body>
+</html>

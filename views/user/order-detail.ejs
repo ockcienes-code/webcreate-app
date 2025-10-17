@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sipariş Detayı - WebCreate</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/animations.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body>
+    <!-- Header -->
+    <% if (user) { %>
+        <% if (user.role === 'admin') { %>
+            <%- include('../partials/admin-header') %>
+        <% } else { %>
+            <%- include('../partials/user-header') %>
+        <% } %>
+    <% } else { %>
+        <%- include('../partials/header') %>
+    <% } %>
+
+    <main class="container" style="min-height: 80vh; padding: 2rem 0;">
+        <div class="animate-fade-in">
+            <!-- Üst Bilgi -->
+            <div style="display: flex; justify-content: between; align-items: start; margin-bottom: 2rem; gap: 2rem;">
+                <div style="flex: 1;">
+                    <h1 style="color: var(--white); margin-bottom: 0.5rem;"><%= order.title %></h1>
+                    <p style="color: #ccc; margin-bottom: 1rem;"><%= order.description %></p>
+                    
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <div>
+                            <span class="status-badge status-<%= order.status %>" style="font-size: 1.1rem;">
+                                <%
+                                    const statusText = {
+                                        'pending': '⏳ Beklemede',
+                                        'in_progress': '🚀 Üretimde',
+                                        'delivered': '✅ Teslim Edildi',
+                                        'revision': '🔄 Revizyonda',
+                                        'cancelled': '❌ İptal Edildi'
+                                    };
+                                %>
+                                <%= statusText[order.status] %>
+                            </span>
+                        </div>
+                        
+                        <% if (order.price > 0) { %>
+                        <div style="background: var(--medium-gray); padding: 0.5rem 1rem; border-radius: 5px;">
+                            <strong style="color: var(--white);">💵 <%= order.price %> TL</strong>
+                        </div>
+                        <% } %>
+                        
+                        <% if (order.deadline) { %>
+                        <div style="background: var(--medium-gray); padding: 0.5rem 1rem; border-radius: 5px;">
+                            <strong style="color: var(--white);">📅 <%= new Date(order.deadline).toLocaleDateString('tr-TR') %></strong>
+                        </div>
+                        <% } %>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 1rem;">
+                    <a href="/user/orders" class="btn btn-outline">
+                        ← Geri
+                    </a>
+                    
+                    <% if (order.status === 'delivered') { %>
+                    <button onclick="openRevisionModal('<%= order._id %>', '<%= order.title %>')" class="btn">
+                        🔄 Revizyon İste
+                    </button>
+                    <% } %>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Sol Kolon -->
+                <div class="col">
+                    <!-- Sipariş Detayları -->
+                    <div class="card">
+                        <h3 style="color: var(--white); margin-bottom: 1.5rem;">📋 Sipariş Detayları</h3>
+                        
+                        <div style="display: grid; gap: 1rem;">
+                            <div style="display: flex; justify-content: between;">
+                                <span style="color: #ccc;">Oluşturulma Tarihi:</span>
+                                <span style="color: var(--white);"><%= new Date(order.createdAt).toLocaleDateString('tr-TR') %></span>
+                            </div>
+                            
+                            <div style="display: flex; justify-content: between;">
+                                <span style="color: #ccc;">Son Güncelleme:</span>
+                                <span style="color: var(--white);"><%= new Date(order.updatedAt).toLocaleDateString('tr-TR') %></span>
+                            </div>
+                            
+                            <% if (order.price > 0) { %>
+                            <div style="display: flex; justify-content: between;">
+                                <span style="color: #ccc;">Fiyat:</span>
+                                <span style="color: var(--white); font-weight: bold;"><%= order.price %> TL</span>
+                            </div>
+                            <% } %>
+                            
+                            <% if (order.deadline) { %>
+                            <div style="display: flex; justify-content: between;">
+                                <span style="color: #ccc;">Teslim Tarihi:</span>
+                                <span style="color: var(--white);"><%= new Date(order.deadline).toLocaleDateString('tr-TR') %></span>
+                            </div>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Yüklenen Dosyalar -->
+                    <div class="card">
+                        <h3 style="color: var(--white); margin-bottom: 1.5rem;">📎 Yüklediğim Dosyalar</h3>
+                        
+                        <% if (order.files && order.files.length > 0) { %>
+                            <div style="display: grid; gap: 0.5rem;">
+                                <% order.files.forEach((file, index) => { %>
+                                <div style="display: flex; justify-content: between; align-items: center; padding: 1rem; background: var(--medium-gray); border-radius: 5px;">
+                                    <div style="display: flex; align-items: center; gap: 1rem;">
+                                        <div style="font-size: 1.5rem;">
+                                            <%= getFileIcon(file.originalName) %>
+                                        </div>
+                                        <div>
+                                            <div style="color: var(--white); font-weight: 500;"><%= file.originalName %></div>
+                                            <div style="color: #ccc; font-size: 0.875rem;">
+                                                <%= new Date(file.uploadedAt).toLocaleDateString('tr-TR') %>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <a href="/files/download/<%= file.filename %>" class="btn" style="padding: 0.5rem 1rem;">
+                                        📥 İndir
+                                    </a>
+                                </div>
+                                <% }); %>
+                            </div>
+                        <% } else { %>
+                            <div style="text-align: center; padding: 2rem; color: #ccc;">
+                                <p>Henüz dosya yüklenmemiş.</p>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Sağ Kolon -->
+                <div class="col">
+                    <!-- Teslim Edilen Dosyalar -->
+                    <% if (order.deliveryFiles && order.deliveryFiles.length > 0) { %>
+                    <div class="card">
+                        <h3 style="color: var(--white); margin-bottom: 1.5rem;">🎁 Teslim Edilen Dosyalar</h3>
+                        
+                        <div style="display: grid; gap: 0.5rem;">
+                            <% order.deliveryFiles.forEach((file, index) => { %>
+                            <div style="display: flex; justify-content: between; align-items: center; padding: 1rem; background: var(--medium-gray); border-radius: 5px; border-left: 4px solid var(--success);">
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <div style="font-size: 1.5rem;">
+                                        <%= getFileIcon(file.originalName) %>
+                                    </div>
+                                    <div>
+                                        <div style="color: var(--white); font-weight: 500;"><%= file.originalName %></div>
+                                        <div style="color: #ccc; font-size: 0.875rem;">
+                                            <%= new Date(file.deliveredAt).toLocaleDateString('tr-TR') %>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <a href="/files/download/<%= file.filename %>" class="btn btn-success" style="padding: 0.5rem 1rem;">
+                                    📥 İndir
+                                </a>
+                            </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                    <% } %>
+
+                    <!-- Revizyon Durumu -->
+                    <% if (order.revisionRequest && order.revisionRequest.requested) { %>
+                    <div class="card">
+                        <h3 style="color: var(--white); margin-bottom: 1.5rem;">🔄 Revizyon İsteği</h3>
+                        
+                        <div style="background: var(--medium-gray); padding: 1.5rem; border-radius: 5px; border-left: 4px solid var(--warning);">
+                            <div style="margin-bottom: 1rem;">
+                                <strong style="color: var(--white); display: block; margin-bottom: 0.5rem;">Açıklamanız:</strong>
+                                <p style="color: #ccc; line-height: 1.6;"><%= order.revisionRequest.description %></p>
+                            </div>
+                            
+                            <div style="display: flex; justify-content: between; align-items: center;">
+                                <div>
+                                    <span class="status-badge status-<%= order.revisionRequest.status %>">
+                                        <%
+                                            const revisionStatus = {
+                                                'pending': '⏳ Beklemede',
+                                                'accepted': '✅ Kabul Edildi',
+                                                'rejected': '❌ Reddedildi',
+                                                'counter_offer': '💡 Karşı Teklif'
+                                            };
+                                        %>
+                                        <%= revisionStatus[order.revisionRequest.status] %>
+                                    </span>
+                                </div>
+                                
+                                <div style="color: #ccc; font-size: 0.875rem;">
+                                    <%= new Date(order.revisionRequest.requestedAt).toLocaleDateString('tr-TR') %>
+                                </div>
+                            </div>
+                            
+                            <% if (order.revisionRequest.counterOffer) { %>
+                            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--light-gray);">
+                                <strong style="color: var(--white); display: block; margin-bottom: 0.5rem;">Admin Yanıtı:</strong>
+                                <p style="color: #ccc; line-height: 1.6;"><%= order.revisionRequest.counterOffer %></p>
+                            </div>
+                            <% } %>
+                        </div>
+                    </div>
+                    <% } %>
+
+                    <!-- İptal Durumu -->
+                    <% if (order.status === 'cancelled' && order.cancellationReason) { %>
+                    <div class="card">
+                        <h3 style="color: var(--white); margin-bottom: 1.5rem;">❌ İptal Nedeni</h3>
+                        
+                        <div style="background: rgba(220, 53, 69, 0.1); padding: 1.5rem; border-radius: 5px; border-left: 4px solid var(--danger);">
+                            <p style="color: #ccc; line-height: 1.6; margin: 0;"><%= order.cancellationReason %></p>
+                        </div>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <%- include('../partials/footer') %>
+
+    <script src="/js/main.js"></script>
+    <% if (user && user.role === 'admin') { %>
+        <script src="/js/admin.js"></script>
+    <% } else if (user) { %>
+        <script src="/js/user.js"></script>
+    <% } %>
+
+    <!-- Revizyon Modal -->
+    <div id="revisionModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="card" style="max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <h3 style="color: var(--white); margin-bottom: 1rem;">🔄 Revizyon İsteği</h3>
+            
+            <form id="revisionForm">
+                <input type="hidden" id="revisionOrderId" name="orderId" value="<%= order._id %>">
+                
+                <div class="form-group">
+                    <label class="form-label">Sipariş</label>
+                    <div style="padding: 0.75rem; background: var(--medium-gray); border-radius: 5px; color: var(--white);">
+                        <%= order.title %>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="revisionDescription" class="form-label">Revizyon Açıklaması *</label>
+                    <textarea 
+                        id="revisionDescription" 
+                        name="revisionDescription" 
+                        class="form-control" 
+                        required 
+                        placeholder="Yapılmasını istediğiniz değişiklikleri detaylı bir şekilde açıklayın..."
+                        rows="6"
+                    ></textarea>
+                    <small style="color: #ccc; display: block; margin-top: 0.5rem;">
+                        💡 Her sipariş için 1 revizyon hakkınız bulunmaktadır. Lütfen tüm isteklerinizi detaylı şekilde belirtin.
+                    </small>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" onclick="closeRevisionModal()" class="btn btn-outline" style="flex: 1;">
+                        İptal
+                    </button>
+                    <button type="submit" class="btn" style="flex: 1;">
+                        📨 İsteği Gönder
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    function getFileIcon(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        const icons = {
+            'zip': '📦', 'rar': '📦', 'pdf': '📄',
+            'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️',
+            'doc': '📝', 'docx': '📝'
+        };
+        return icons[ext] || '📄';
+    }
+
+    function openRevisionModal(orderId, orderTitle) {
+        document.getElementById('revisionOrderId').value = orderId;
+        document.getElementById('revisionModal').style.display = 'flex';
+    }
+
+    function closeRevisionModal() {
+        document.getElementById('revisionModal').style.display = 'none';
+        document.getElementById('revisionForm').reset();
+    }
+
+    // Revizyon formu gönderme
+    document.getElementById('revisionForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const orderId = document.getElementById('revisionOrderId').value;
+        const description = document.getElementById('revisionDescription').value;
+        
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = '⏳ Gönderiliyor...';
+        submitBtn.disabled = true;
+        
+        try {
+            const response = await fetch(`/orders/${orderId}/revision`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    revisionDescription: description
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showNotification('Revizyon isteğiniz başarıyla gönderildi!', 'success');
+                closeRevisionModal();
+                // Sayfayı yenile
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showNotification(data.error || 'Bir hata oluştu!', 'error');
+                submitBtn.innerHTML = '📨 İsteği Gönder';
+                submitBtn.disabled = false;
+            }
+        } catch (error) {
+            console.error('Revizyon isteği hatası:', error);
+            showNotification('İstek gönderilirken bir hata oluştu!', 'error');
+            submitBtn.innerHTML = '📨 İsteği Gönder';
+            submitBtn.disabled = false;
+        }
+    });
+
+    // Modal dışına tıklayınca kapatma
+    document.getElementById('revisionModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeRevisionModal();
+        }
+    });
+    </script>
+</body>
+</html>

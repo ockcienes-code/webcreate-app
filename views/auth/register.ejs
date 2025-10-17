@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kayıt Ol - WebCreate</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/animations.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body>
+    <!-- Header -->
+    <% if (user) { %>
+        <% if (user.role === 'admin') { %>
+            <%- include('../partials/admin-header') %>
+        <% } else { %>
+            <%- include('../partials/user-header') %>
+        <% } %>
+    <% } else { %>
+        <%- include('../partials/header') %>
+    <% } %>
+
+    <main class="container" style="min-height: 80vh; padding: 2rem 0;">
+        <div class="animate-fade-in">
+            <div class="container" style="max-width: 500px; margin: 3rem auto;">
+                <div class="card">
+                    <div style="text-align: center; margin-bottom: 2rem;">
+                        <h1 style="color: var(--white); margin-bottom: 0.5rem;">Kayıt Ol</h1>
+                        <p style="color: #ccc;">Yeni hesap oluşturun</p>
+                    </div>
+
+                    <% if (error) { %>
+                        <div class="alert alert-error">
+                            <%= error %>
+                        </div>
+                    <% } %>
+
+                    <form action="/auth/register" method="POST" data-validate>
+                        <div class="form-group">
+                            <label for="name" class="form-label">Ad Soyad</label>
+                            <input 
+                                type="text" 
+                                id="name" 
+                                name="name" 
+                                class="form-control" 
+                                required
+                                placeholder="Adınız ve soyadınız"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email" class="form-label">E-posta</label>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                class="form-control" 
+                                required
+                                placeholder="ornek@email.com"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone" class="form-label">Telefon (Opsiyonel)</label>
+                            <input 
+                                type="tel" 
+                                id="phone" 
+                                name="phone" 
+                                class="form-control" 
+                                placeholder="+90 (555) 123 45 67"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="company" class="form-label">Şirket (Opsiyonel)</label>
+                            <input 
+                                type="text" 
+                                id="company" 
+                                name="company" 
+                                class="form-control" 
+                                placeholder="Şirket adı"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password" class="form-label">Şifre</label>
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password" 
+                                class="form-control" 
+                                required
+                                placeholder="En az 6 karakter"
+                                minlength="6"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirmPassword" class="form-label">Şifre Tekrar</label>
+                            <input 
+                                type="password" 
+                                id="confirmPassword" 
+                                name="confirmPassword" 
+                                class="form-control" 
+                                required
+                                placeholder="Şifrenizi tekrar girin"
+                                minlength="6"
+                            >
+                        </div>
+
+                        <button type="submit" class="btn" style="width: 100%; margin-bottom: 1rem;">
+                            Kayıt Ol
+                        </button>
+
+                        <div style="text-align: center;">
+                            <p style="color: #ccc;">
+                                Zaten hesabınız var mı? 
+                                <a href="/auth/login" style="color: var(--accent); text-decoration: none;">
+                                    Giriş Yapın
+                                </a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <%- include('../partials/footer') %>
+
+    <script src="/js/main.js"></script>
+    <% if (user && user.role === 'admin') { %>
+        <script src="/js/admin.js"></script>
+    <% } else if (user) { %>
+        <script src="/js/user.js"></script>
+    <% } %>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        const password = document.getElementById('password');
+        const confirmPassword = document.getElementById('confirmPassword');
+
+        form.addEventListener('submit', function(e) {
+            if (password.value !== confirmPassword.value) {
+                e.preventDefault();
+                alert('Şifreler eşleşmiyor!');
+                return false;
+            }
+        });
+    });
+    </script>
+</body>
+</html>

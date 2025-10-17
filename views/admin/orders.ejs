@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sipariş Yönetimi - WebCreate</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/animations.css">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body>
+    <%- include('../partials/admin-header') %>
+
+    <main class="container" style="min-height: 80vh; padding: 2rem 0;">
+        <div class="animate-fade-in">
+            <!-- Başlık ve Filtreler -->
+            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h1 style="color: var(--white); margin-bottom: 0.5rem;">Sipariş Yönetimi</h1>
+                    <p style="color: #ccc;">Tüm siparişleri görüntüle ve yönet</p>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <div style="position: relative;">
+                        <input 
+                            type="text" 
+                            id="orderSearch" 
+                            placeholder="Sipariş ara..."
+                            class="form-control" 
+                            style="padding-left: 2.5rem; width: 250px;"
+                        >
+                        <span style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #ccc;">🔍</span>
+                    </div>
+                    
+                    <select id="orderStatusFilter" class="form-control" style="width: 180px;">
+                        <option value="all">Tüm Durumlar</option>
+                        <option value="pending">⏳ Beklemede</option>
+                        <option value="in_progress">🚀 Üretimde</option>
+                        <option value="delivered">✅ Teslim Edildi</option>
+                        <option value="revision">🔄 Revizyonda</option>
+                        <option value="cancelled">❌ İptal Edildi</option>
+                    </select>
+                    
+                    <select id="orderDateFilter" class="form-control" style="width: 180px;">
+                        <option value="all">Tüm Zamanlar</option>
+                        <option value="today">Bugün</option>
+                        <option value="week">Bu Hafta</option>
+                        <option value="month">Bu Ay</option>
+                        <option value="year">Bu Yıl</option>
+                    </select>
+                    
+                    <button onclick="exportOrders()" class="btn btn-outline">
+                        📊 Dışa Aktar
+                    </button>
+                </div>
+            </div>
+
+            <!-- İstatistik Kartları -->
+            <div class="stats-grid" style="margin-bottom: 2rem;">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalOrders"><%= orders.length %></div>
+                    <div class="stat-label">Toplam Sipariş</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-number" id="pendingOrders">
+                        <%= orders.filter(o => o.status === 'pending').length %>
+                    </div>
+                    <div class="stat-label">Bekleyen</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-number" id="inProgressOrders">
+                        <%= orders.filter(o => o.status === 'in_progress').length %>
+                    </div>
+                    <div class="stat-label">Üretimde</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-number" id="revisionOrders">
+                        <%= orders.filter(o => o.status === 'revision').length %>
+                    </div>
+                    <div class="stat-label">Revizyonda</div>
+                </div>
+            </div>
+
+            <!-- Sipariş Tablosu -->
+            <div class="card">
+                <div class="table">
+                    <table style="width: 100%;" id="ordersTable">
+                        <thead>
+                            <tr>
+                                <th>Sipariş ID</th>
+                                <th>Kullanıcı</th>
+                                <th>Başlık</th>
+                                <th>Durum</th>
+                                <th>Fiyat</th>
+                                <th>Teslim Tarihi</th>
+                                <th>Oluşturulma</th>
+                                <th>Öncelik</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (orders.length > 0) { %>
+                                <% orders.forEach(order => { %>
+                                <tr data-order="<%= order._id %>">
+                                    <td>
+                                        <div style="color: #ccc; font-family: monospace; font-size: 0.875rem;">
+                                            #<%= order._id.toString().substring(18, 24) %>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <div style="color: var(--white); font-weight: 500;"><%= order.user.name %></div>
+                                            <div style="color: #ccc; font-size: 0.875rem;"><%= order.user.email %></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div style="max-width: 200px;">
+                                            <div style="color: var(--white); font-weight: 500; margin-bottom: 0.25rem;">
+                                                <%= order.title %>
+                                            </div>
+                                            <div style="color: #ccc; font-size: 0.875rem; line-height: 1.3;">
+                                                <%= order.description.substring(0, 50) %>...
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-<%= order.status %>">
+                                            <%
+                                                const statusText = {
+                                                    'pending': '⏳ Beklemede',
+                                                    'in_progress': '🚀 Üretimde',
+                                                    'delivered': '✅ Teslim Edildi',
+                                                    'revision': '🔄 Revizyonda',
+                                                    'cancelled': '❌ İptal Edildi'
+                                                };
+                                            %>
+                                            <%= statusText[order.status] %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <% if (order.price > 0) { %>
+                                            <span style="color: var(--white); font-weight: 500;">
+                                                <%= order.price %> TL
+                                            </span>
+                                        <% } else { %>
+                                            <span style="color: #ccc;">-</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <% if (order.deadline) { %>
+                                            <span style="color: #ccc;">
+                                                <%= new Date(order.deadline).toLocaleDateString('tr-TR') %>
+                                            </span>
+                                        <% } else { %>
+                                            <span style="color: #ccc;">-</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <span style="color: #ccc;">
+                                            <%= new Date(order.createdAt).toLocaleDateString('tr-TR') %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <%
+                                            const priorityIcons = {
+                                                'low': '🔵',
+                                                'medium': '🟡',
+                                                'high': '🟠',
+                                                'urgent': '🔴'
+                                            };
+                                        %>
+                                        <span title="<%= order.priority %>">
+                                            <%= priorityIcons[order.priority] %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                            <a href="/admin/orders/<%= order._id %>" class="btn" style="padding: 0.25rem 0.5rem;" title="Detayları Gör">
+                                                👁️
+                                            </a>
+                                            <button onclick="updateOrderStatus('<%= order._id %>')" class="btn btn-outline" style="padding: 0.25rem 0.5rem;" title="Durum Güncelle">
+                                                ✏️
+                                            </button>
+                                            <% if (order.status === 'delivered') { %>
+                                            <button onclick="deliverOrder('<%= order._id %>')" class="btn btn-success" style="padding: 0.25rem 0.5rem;" title="Teslim Et">
+                                                📦
+                                            </button>
+                                            <% } %>
+                                            <button onclick="sendMessage('<%= order.user._id %>', '<%= order.user.name %>')" class="btn btn-outline" style="padding: 0.25rem 0.5rem;" title="Mesaj Gönder">
+                                                💬
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="9" style="text-align: center; padding: 3rem; color: #ccc;">
+                                        <div style="font-size: 3rem; margin-bottom: 1rem;">📦</div>
+                                        <h3 style="color: var(--white); margin-bottom: 0.5rem;">Henüz sipariş bulunmuyor</h3>
+                                        <p>Müşteriler sipariş oluşturduğunda burada listelenecek</p>
+                                    </td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sayfalama -->
+            <% if (orders.length > 0) { %>
+            <div style="display: flex; justify-content: between; align-items: center; margin-top: 2rem;">
+                <div style="color: #ccc;">
+                    Toplam <strong><%= orders.length %></strong> sipariş
+                </div>
+                
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <button class="btn btn-outline">← Önceki</button>
+                    <span style="color: #ccc; padding: 0.5rem 1rem;">Sayfa 1</span>
+                    <button class="btn btn-outline">Sonraki →</button>
+                </div>
+            </div>
+            <% } %>
+        </div>
+    </main>
+
+    <%- include('../partials/footer') %>
+
+    <script src="/js/main.js"></script>
+    <script src="/js/admin.js"></script>
+
+    <!-- Durum Güncelleme Modal -->
+    <div id="statusModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="card" style="max-width: 500px; width: 90%;">
+            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="color: var(--white); margin: 0;">Sipariş Durumu Güncelle</h3>
+                <button onclick="closeStatusModal()" style="background: none; border: none; color: #ccc; font-size: 1.5rem; cursor: pointer;">×</button>
+            </div>
+            
+            <form id="statusForm">
+                <input type="hidden" id="statusOrderId">
+                
+                <div class="form-group">
+                    <label class="form-label">Yeni Durum</label>
+                    <select id="newStatus" class="form-control" required>
+                        <option value="">Durum seçin</option>
+                        <option value="pending">⏳ Beklemede</option>
+                        <option value="in_progress">🚀 Üretimde</option>
+                        <option value="delivered">✅ Teslim Edildi</option>
+                        <option value="cancelled">❌ İptal Edildi</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="priceGroup" style="display: none;">
+                    <label for="orderPrice" class="form-label">Fiyat (TL)</label>
+                    <input type="number" id="orderPrice" class="form-control" min="0" step="0.01">
+                </div>
+                
+                <div class="form-group" id="deadlineGroup" style="display: none;">
+                    <label for="orderDeadline" class="form-label">Teslim Tarihi</label>
+                    <input type="date" id="orderDeadline" class="form-control">
+                </div>
+                
+                <div class="form-group" id="cancellationGroup" style="display: none;">
+                    <label for="cancellationReason" class="form-label">İptal Nedeni</label>
+                    <textarea id="cancellationReason" class="form-control" rows="3" placeholder="İptal nedenini açıklayın..."></textarea>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" onclick="closeStatusModal()" class="btn btn-outline" style="flex: 1;">
+                        İptal
+                    </button>
+                    <button type="submit" class="btn" style="flex: 1;">
+                        📝 Güncelle
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    // Sipariş arama
+    document.getElementById('orderSearch').addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('#ordersTable tbody tr');
+        
+        rows.forEach(row => {
+            const orderTitle = row.cells[2].textContent.toLowerCase();
+            const userName = row.cells[1].textContent.toLowerCase();
+            
+            if (orderTitle.includes(searchTerm) || userName.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+    // Durum filtreleme
+    document.getElementById('orderStatusFilter').addEventListener('change', function(e) {
+        const status = e.target.value;
+        const rows = document.querySelectorAll('#ordersTable tbody tr');
+        
+        rows.forEach(row => {
+            if (status === 'all') {
+                row.style.display = '';
+            } else {
+                const statusClass = row.querySelector('.status-badge').className;
+                if (statusClass.includes(`status-${status}`)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        });
+        
+        updateStatistics();
+    });
+
+    // Tarih filtreleme
+    document.getElementById('orderDateFilter').addEventListener('change', function(e) {
+        // Tarih filtreleme işlemi burada yapılacak
+        console.log('Tarih filtresi:', e.target.value);
+    });
+
+    // İstatistikleri güncelle
+    function updateStatistics() {
+        const visibleRows = document.querySelectorAll('#ordersTable tbody tr[style=""]').length;
+        const totalRows = document.querySelectorAll('#ordersTable tbody tr').length;
+        
+        document.getElementById('totalOrders').textContent = visibleRows;
+        // Diğer istatistikler de benzer şekilde güncellenebilir
+    }
+
+    // Sipariş durumu güncelleme modalını aç
+    function updateOrderStatus(orderId) {
+        document.getElementById('statusOrderId').value = orderId;
+        document.getElementById('statusModal').style.display = 'flex';
+    }
+
+    function closeStatusModal() {
+        document.getElementById('statusModal').style.display = 'none';
+        document.getElementById('statusForm').reset();
+        hideAllOptionGroups();
+    }
+
+    // Durum seçimine göre ek alanları göster/gizle
+    document.getElementById('newStatus').addEventListener('change', function(e) {
+        hideAllOptionGroups();
+        
+        switch(e.target.value) {
+            case 'in_progress':
+                document.getElementById('priceGroup').style.display = 'block';
+                document.getElementById('deadlineGroup').style.display = 'block';
+                break;
+            case 'cancelled':
+                document.getElementById('cancellationGroup').style.display = 'block';
+                break;
+        }
+    });
+
+    function hideAllOptionGroups() {
+        document.getElementById('priceGroup').style.display = 'none';
+        document.getElementById('deadlineGroup').style.display = 'none';
+        document.getElementById('cancellationGroup').style.display = 'none';
+    }
+
+    // Durum güncelleme formu
+    document.getElementById('statusForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const orderId = document.getElementById('statusOrderId').value;
+        const status = document.getElementById('newStatus').value;
+        const price = document.getElementById('orderPrice').value;
+        const deadline = document.getElementById('orderDeadline').value;
+        const cancellationReason = document.getElementById('cancellationReason').value;
+        
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = '⏳ Güncelleniyor...';
+        submitBtn.disabled = true;
+        
+        try {
+            const response = await fetch(`/admin/orders/${orderId}/status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    status,
+                    price: price || undefined,
+                    deadline: deadline || undefined,
+                    cancellationReason: cancellationReason || undefined
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showNotification('Sipariş durumu başarıyla güncellendi!', 'success');
+                closeStatusModal();
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showNotification(data.error || 'Durum güncellenirken bir hata oluştu!', 'error');
+                submitBtn.innerHTML = '📝 Güncelle';
+                submitBtn.disabled = false;
+            }
+        } catch (error) {
+            console.error('Durum güncelleme hatası:', error);
+            showNotification('İşlem sırasında bir hata oluştu!', 'error');
+            submitBtn.innerHTML = '📝 Güncelle';
+            submitBtn.disabled = false;
+        }
+    });
+
+    // Sipariş teslim etme
+    function deliverOrder(orderId) {
+        window.location.href = `/admin/orders/${orderId}#deliver`;
+    }
+
+    // Kullanıcıya mesaj gönderme
+    function sendMessage(userId, userName) {
+        showNotification(`${userName} kullanıcısına mesaj gönderme özelliği yakında eklenecek!`, 'info');
+    }
+
+    // Siparişleri dışa aktarma
+    function exportOrders() {
+        showNotification('Siparişler dışa aktarılıyor...', 'info');
+        // Dışa aktarma işlemi burada yapılacak
+    }
+
+    // Modal dışına tıklayınca kapatma
+    document.getElementById('statusModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeStatusModal();
+        }
+    });
+    </script>
+</body>
+</html>

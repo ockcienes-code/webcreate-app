@@ -1,0 +1,58 @@
+<header class="header">
+    <nav class="navbar container">
+        <a href="/admin/dashboard" class="logo">WebCreate Admin</a>
+        
+        <ul class="nav-links">
+            <li><a href="/admin/dashboard">Dashboard</a></li>
+            <li><a href="/admin/orders">Siparişler</a></li>
+            <li><a href="/admin/users">Kullanıcılar</a></li>
+            <li><a href="/admin/revisions">Revizyonlar</a></li>
+            <li><a href="/admin/messages">Mesajlar</a></li>
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle">
+                    <%= user.name %>
+                </a>
+                <div class="dropdown-menu">
+                    <a href="/admin/dashboard" class="dropdown-item">Admin Panel</a>
+                    <a href="/auth/logout" class="dropdown-item">Çıkış</a>
+                </div>
+            </li>
+        </ul>
+    </nav>
+</header>
+
+<style>
+.dropdown {
+    position: relative;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--dark-gray);
+    border: 1px solid var(--light-gray);
+    border-radius: 5px;
+    padding: 0.5rem 0;
+    min-width: 150px;
+    display: none;
+    z-index: 1000;
+}
+
+.dropdown:hover .dropdown-menu {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+.dropdown-item {
+    display: block;
+    padding: 0.5rem 1rem;
+    color: var(--white);
+    text-decoration: none;
+    transition: background 0.3s ease;
+}
+
+.dropdown-item:hover {
+    background: var(--medium-gray);
+}
+</style>
