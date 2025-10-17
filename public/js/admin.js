@@ -101,8 +101,8 @@ function initSystemMonitoring() {
     // Sistem sağlık kontrolü
     checkSystemHealth();
     
-    // Performans metrikleri
-    monitorPerformance();
+    // Performans metrikleri - HATA VEREN SATIR KALDIRILDI
+    // monitorPerformance(); 
 }
 
 async function checkSystemHealth() {

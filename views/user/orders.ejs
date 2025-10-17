@@ -217,6 +217,13 @@
             closeRevisionModal();
         }
     });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const successMessage = "<%= locals.success_message || '' %>";
+        if (successMessage) {
+            showNotification(successMessage, 'success');
+        }
+    });
     </script>
 </body>
 </html>

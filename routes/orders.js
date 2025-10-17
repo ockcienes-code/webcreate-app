@@ -1,5 +1,6 @@
 const express = require('express');
 const Order = require('../models/Order');
+const Notification = require('../models/Notification'); // Bu satır eklendi
 const { requireAuth } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const router = express.Router();
@@ -41,13 +42,15 @@ router.post('/create', requireAuth, upload.array('files', 5), async (req, res) =
     });
     await notification.save();
 
+    // Popup bildirimi için session'a mesaj ekle
+    req.session.success_message = 'Siparişiniz başarıyla oluşturuldu ve incelenmek üzere gönderildi!';
+
     res.redirect('/user/orders');
 
   } catch (error) {
     console.error('Sipariş oluşturma hatası:', error);
     res.render('user/create-order', {
       title: 'Yeni Sipariş Oluştur',
-      content: 'create-order', // Bu satırı ekleyin
       error: 'Sipariş oluşturulurken bir hata oluştu'
     });
   }
@@ -65,7 +68,6 @@ router.get('/:id', requireAuth, async (req, res) => {
       });
     }
 
-    // Kullanıcı kontrolü
     if (order.user._id.toString() !== req.session.user.id && req.session.user.role !== 'admin') {
       return res.status(403).render('error', {
         title: 'Erişim Reddedildi',
@@ -101,7 +103,6 @@ router.post('/:id/revision', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Sadece teslim edilen siparişler için revizyon isteyebilirsiniz' });
     }
 
-    // Revizyon isteğini güncelle
     order.revisionRequest = {
       requested: true,
       description: revisionDescription,
@@ -112,7 +113,6 @@ router.post('/:id/revision', requireAuth, async (req, res) => {
 
     await order.save();
 
-    // Bildirim oluştur
     const notification = new Notification({
       user: req.session.user.id,
       title: 'Revizyon İsteği Gönderildi',

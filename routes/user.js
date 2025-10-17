@@ -56,9 +56,14 @@ router.get('/orders', requireAuth, async (req, res) => {
     const orders = await Order.find({ user: req.session.user.id })
       .sort({ createdAt: -1 });
 
+    // Popup bildirimi için session'dan mesajı al ve sil
+    const success_message = req.session.success_message;
+    delete req.session.success_message;
+
     res.render('user/orders', {
       title: 'Siparişlerim',
-      orders
+      orders,
+      success_message // Mesajı template'e gönder
     });
 
   } catch (error) {

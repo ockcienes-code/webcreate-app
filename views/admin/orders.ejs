@@ -14,8 +14,7 @@
 
     <main class="container" style="min-height: 80vh; padding: 2rem 0;">
         <div class="animate-fade-in">
-            <!-- Başlık ve Filtreler -->
-            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
                 <div>
                     <h1 style="color: var(--white); margin-bottom: 0.5rem;">Sipariş Yönetimi</h1>
                     <p style="color: #ccc;">Tüm siparişleri görüntüle ve yönet</p>
@@ -56,7 +55,6 @@
                 </div>
             </div>
 
-            <!-- İstatistik Kartları -->
             <div class="stats-grid" style="margin-bottom: 2rem;">
                 <div class="stat-card">
                     <div class="stat-number" id="totalOrders"><%= orders.length %></div>
@@ -85,7 +83,6 @@
                 </div>
             </div>
 
-            <!-- Sipariş Tablosu -->
             <div class="card">
                 <div class="table">
                     <table style="width: 100%;" id="ordersTable">
@@ -150,6 +147,7 @@
                                             <span style="color: #ccc;">-</span>
                                         <% } %>
                                     </td>
+                                    
                                     <td>
                                         <% if (order.deadline) { %>
                                             <span style="color: #ccc;">
@@ -185,12 +183,7 @@
                                             <button onclick="updateOrderStatus('<%= order._id %>')" class="btn btn-outline" style="padding: 0.25rem 0.5rem;" title="Durum Güncelle">
                                                 ✏️
                                             </button>
-                                            <% if (order.status === 'delivered') { %>
-                                            <button onclick="deliverOrder('<%= order._id %>')" class="btn btn-success" style="padding: 0.25rem 0.5rem;" title="Teslim Et">
-                                                📦
-                                            </button>
-                                            <% } %>
-                                            <button onclick="sendMessage('<%= order.user._id %>', '<%= order.user.name %>')" class="btn btn-outline" style="padding: 0.25rem 0.5rem;" title="Mesaj Gönder">
+                                            <button onclick="sendMessage('<%= order.user._id %>', '<%= order.user.name %>', '<%= order.title %>')" class="btn btn-outline" style="padding: 0.25rem 0.5rem;" title="Mesaj Gönder">
                                                 💬
                                             </button>
                                         </div>
@@ -211,9 +204,8 @@
                 </div>
             </div>
 
-            <!-- Sayfalama -->
             <% if (orders.length > 0) { %>
-            <div style="display: flex; justify-content: between; align-items: center; margin-top: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem;">
                 <div style="color: #ccc;">
                     Toplam <strong><%= orders.length %></strong> sipariş
                 </div>
@@ -230,13 +222,9 @@
 
     <%- include('../partials/footer') %>
 
-    <script src="/js/main.js"></script>
-    <script src="/js/admin.js"></script>
-
-    <!-- Durum Güncelleme Modal -->
-    <div id="statusModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;">
+    <div id="statusModal" class="modal" style="display: none;">
         <div class="card" style="max-width: 500px; width: 90%;">
-            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                 <h3 style="color: var(--white); margin: 0;">Sipariş Durumu Güncelle</h3>
                 <button onclick="closeStatusModal()" style="background: none; border: none; color: #ccc; font-size: 1.5rem; cursor: pointer;">×</button>
             </div>
@@ -282,6 +270,36 @@
         </div>
     </div>
 
+    <div id="sendMessageModal" class="modal" style="display: none;">
+        <div class="card" style="max-width: 500px; width: 90%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="color: var(--white); margin: 0;">Kullanıcıya Mesaj Gönder</h3>
+                <button onclick="closeSendMessageModal()" style="background: none; border: none; color: #ccc; font-size: 1.5rem; cursor: pointer;">×</button>
+            </div>
+            <form id="sendMessageForm">
+                <input type="hidden" id="messageUserId" name="userId">
+                <div class="form-group">
+                    <label class="form-label">Alıcı</label>
+                    <input type="text" id="messageUserName" class="form-control" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="messageTitle" class="form-label">Başlık</label>
+                    <input type="text" id="messageTitle" name="title" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="messageContent" class="form-label">Mesaj</label>
+                    <textarea id="messageContent" name="message" class="form-control" rows="5" required></textarea>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" onclick="closeSendMessageModal()" class="btn btn-outline" style="flex: 1;">İptal</button>
+                    <button type="submit" class="btn" style="flex: 1;">Gönder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/main.js"></script>
+    <script src="/js/admin.js"></script>
     <script>
     // Sipariş arama
     document.getElementById('orderSearch').addEventListener('input', function(e) {
@@ -317,24 +335,7 @@
                 }
             }
         });
-        
-        updateStatistics();
     });
-
-    // Tarih filtreleme
-    document.getElementById('orderDateFilter').addEventListener('change', function(e) {
-        // Tarih filtreleme işlemi burada yapılacak
-        console.log('Tarih filtresi:', e.target.value);
-    });
-
-    // İstatistikleri güncelle
-    function updateStatistics() {
-        const visibleRows = document.querySelectorAll('#ordersTable tbody tr[style=""]').length;
-        const totalRows = document.querySelectorAll('#ordersTable tbody tr').length;
-        
-        document.getElementById('totalOrders').textContent = visibleRows;
-        // Diğer istatistikler de benzer şekilde güncellenebilir
-    }
 
     // Sipariş durumu güncelleme modalını aç
     function updateOrderStatus(orderId) {
@@ -396,7 +397,6 @@
                     cancellationReason: cancellationReason || undefined
                 })
             });
-            
             const data = await response.json();
             
             if (data.success) {
@@ -418,27 +418,83 @@
         }
     });
 
-    // Sipariş teslim etme
-    function deliverOrder(orderId) {
-        window.location.href = `/admin/orders/${orderId}#deliver`;
+    // Mesajlaşma Modal Fonksiyonları
+    function sendMessage(userId, userName, orderTitle) {
+        document.getElementById('messageUserId').value = userId;
+        document.getElementById('messageUserName').value = userName;
+        document.getElementById('messageTitle').value = `Siparişiniz Hk: ${orderTitle}`;
+        document.getElementById('sendMessageModal').style.display = 'flex';
     }
 
-    // Kullanıcıya mesaj gönderme
-    function sendMessage(userId, userName) {
-        showNotification(`${userName} kullanıcısına mesaj gönderme özelliği yakında eklenecek!`, 'info');
+    function closeSendMessageModal() {
+        document.getElementById('sendMessageModal').style.display = 'none';
     }
+
+    document.getElementById('sendMessageForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Gönderiliyor...';
+
+        try {
+            const response = await fetch('/admin/messages/send-to-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            if (result.success) {
+                showNotification('Mesaj başarıyla gönderildi!', 'success');
+                closeSendMessageModal();
+            } else {
+                showNotification(result.error || 'Mesaj gönderilemedi!', 'error');
+            }
+        } catch (error) {
+            showNotification('Bir hata oluştu!', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Gönder';
+        }
+    });
 
     // Siparişleri dışa aktarma
     function exportOrders() {
-        showNotification('Siparişler dışa aktarılıyor...', 'info');
-        // Dışa aktarma işlemi burada yapılacak
+        const table = document.getElementById('ordersTable');
+        const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText.trim()).slice(0, -1); // Son sütun (İşlemler) hariç
+        const rows = Array.from(table.querySelectorAll('tbody tr'));
+        
+        if(rows.length === 0 || rows[0].querySelectorAll('td').length <= 1) {
+            showNotification('Dışa aktarılacak sipariş yok.', 'warning');
+            return;
+        }
+
+        let csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + '\n';
+        
+        rows.forEach(row => {
+            const rowData = Array.from(row.querySelectorAll('td')).map(td => `"${td.innerText.replace(/"/g, '""').replace(/\n/g, ' ')}"`).slice(0, -1);
+            csvContent += rowData.join(',') + '\n';
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', 'siparisler.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showNotification('Siparişler dışa aktarıldı!', 'success');
     }
 
     // Modal dışına tıklayınca kapatma
-    document.getElementById('statusModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeStatusModal();
-        }
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                if(this.id === 'statusModal') closeStatusModal();
+                if(this.id === 'sendMessageModal') closeSendMessageModal();
+            }
+        });
     });
     </script>
 </body>

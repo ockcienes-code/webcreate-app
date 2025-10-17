@@ -11,19 +11,26 @@
     <%- include('../partials/admin-header') %>
     <main class="container" style="min-height: 80vh; padding: 2rem 0;">
         <div class="animate-fade-in">
-            <h1>Tüm Sistem Bildirimleri</h1>
+            <h1 style="color: var(--white); margin-bottom: 2rem;">Tüm Sistem Bildirimleri</h1>
             <% if (notifications.length > 0) { %>
                 <div class="card">
-                    <% notifications.forEach(notification => { %>
-                        <div class="notification-item" style="padding: 1rem; border-bottom: 1px solid var(--medium-gray);">
-                            <h4><%= notification.title %></h4>
-                            <p><%= notification.message %></p>
-                            <small>Kullanıcı: <%= notification.user.name %> | Tarih: <%= new Date(notification.createdAt).toLocaleString('tr-TR') %></small>
-                        </div>
-                    <% }); %>
+                    <div style="display: grid; gap: 1.5rem;">
+                        <% notifications.forEach(notification => { %>
+                            <div class="notification-item" style="padding: 1.5rem; background: var(--medium-gray); border-radius: 5px; border-left: 4px solid var(--accent);">
+                                <h4 style="color: var(--white); margin-bottom: 0.5rem;"><%= notification.title %></h4>
+                                <p style="color: #ccc; margin-bottom: 1rem;"><%= notification.message %></p>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <small style="color: #888;">Kullanıcı: <%= notification.user ? notification.user.name : 'Silinmiş Kullanıcı' %></small>
+                                    <small style="color: #888;">Tarih: <%= new Date(notification.createdAt).toLocaleString('tr-TR') %></small>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
                 </div>
             <% } else { %>
-                <p>Gösterilecek bildirim yok.</p>
+                <div class="card" style="text-align: center; padding: 3rem;">
+                    <p>Gösterilecek bildirim yok.</p>
+                </div>
             <% } %>
         </div>
     </main>

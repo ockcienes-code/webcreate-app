@@ -426,17 +426,36 @@ document.getElementById('editUserForm').addEventListener('submit', async functio
 
     // Seçilen kullanıcıları dışa aktar
     function exportSelectedUsers() {
-        const selectedUsers = Array.from(document.querySelectorAll('.user-checkbox:checked:not(#selectAllUsers)'))
-            .map(checkbox => checkbox.value);
-        
-        if (selectedUsers.length === 0) {
-            showNotification('Lütfen dışa aktarmak için kullanıcı seçin!', 'warning');
-            return;
-        }
-        
-        showNotification(`${selectedUsers.length} kullanıcı dışa aktarılıyor...`, 'info');
-        // Dışa aktarma işlemi burada yapılacak
+    const selectedCheckboxes = document.querySelectorAll('.user-checkbox:checked:not(#selectAllUsers)');
+    
+    if (selectedCheckboxes.length === 0) {
+        showNotification('Lütfen dışa aktarmak için kullanıcı seçin!', 'warning');
+        return;
     }
+
+    const headers = ['Kullanıcı Bilgisi', 'İletişim', 'Şirket', 'Kayıt Tarihi'];
+    let csvContent = "data:text/csv;charset=utf-8," + headers.join(',') + '\n';
+
+    selectedCheckboxes.forEach(checkbox => {
+        const row = checkbox.closest('tr');
+        const rowData = [
+            `"${row.cells[1].innerText.replace(/\n/g, ' ')}"`, // Kullanıcı Bilgisi
+            `"${row.cells[2].innerText.replace(/\n/g, ' ')}"`, // İletişim
+            `"${row.cells[3].innerText}"`, // Şirket
+            `"${row.cells[4].innerText}"`  // Kayıt Tarihi
+        ];
+        csvContent += rowData.join(',') + '\n';
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', 'kullanicilar.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showNotification(`${selectedCheckboxes.length} kullanıcı dışa aktarıldı!`, 'success');
+}
 
     // Seçilen kullanıcıları sil
     async function deleteSelectedUsers() {
