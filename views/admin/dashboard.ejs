@@ -14,13 +14,11 @@
 
     <main class="container" style="min-height: 80vh; padding: 2rem 0;">
         <div class="animate-fade-in">
-            <!-- Dashboard Header -->
             <div class="dashboard-header">
                 <h1 style="color: var(--white); margin-bottom: 0.5rem;">Admin Dashboard</h1>
                 <p style="color: #ccc;">Sistem istatistikleri ve yönetim paneli</p>
             </div>
 
-            <!-- İstatistik Kartları -->
             <div class="stats-grid">
                 <div class="stat-card animate-slide-left delay-100" data-stat="users">
                     <div class="stat-number"><%= stats.totalUsers %></div>
@@ -44,59 +42,59 @@
             </div>
 
             <div class="row">
-                <!-- Sol Kolon -->
                 <div class="col">
-                    <!-- Son Siparişler -->
                     <div class="dashboard-section">
                         <h2 class="section-title">📦 Son Siparişler</h2>
                         
                         <% if (recentOrders.length > 0) { %>
                             <div class="card">
-                                <div class="table">
-                                    <table style="width: 100%;">
-                                        <thead>
-                                            <tr>
-                                                <th>Kullanıcı</th>
-                                                <th>Başlık</th>
-                                                <th>Durum</th>
-                                                <th>Tarih</th>
-                                                <th>İşlem</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <% recentOrders.forEach(order => { %>
-                                            <tr data-order="<%= order._id %>">
-                                                <td>
-                                                    <div>
-                                                        <div style="color: var(--white); font-weight: 500;"><%= order.user.name %></div>
-                                                        <div style="color: #ccc; font-size: 0.875rem;"><%= order.user.email %></div>
-                                                    </div>
-                                                </td>
-                                                <td style="font-weight: 500;"><%= order.title %></td>
-                                                <td>
-                                                    <span class="status-badge status-<%= order.status %> order-status">
-                                                        <%
-                                                            const statusText = {
-                                                                'pending': '⏳ Beklemede',
-                                                                'in_progress': '🚀 Üretimde',
-                                                                'delivered': '✅ Teslim Edildi',
-                                                                'revision': '🔄 Revizyonda',
-                                                                'cancelled': '❌ İptal Edildi'
-                                                            };
-                                                        %>
-                                                        <%= statusText[order.status] %>
-                                                    </span>
-                                                </td>
-                                                <td><%= new Date(order.createdAt).toLocaleDateString('tr-TR') %></td>
-                                                <td>
-                                                    <a href="/admin/orders/<%= order._id %>" class="btn" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
-                                                        Yönet
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                            <% }); %>
-                                        </tbody>
-                                    </table>
+                                <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                                    <div class="table">
+                                        <table style="width: 100%; min-width: 600px;">
+                                            <thead>
+                                                <tr>
+                                                    <th>Kullanıcı</th>
+                                                    <th>Başlık</th>
+                                                    <th style="white-space: nowrap;">Durum</th>
+                                                    <th>Tarih</th>
+                                                    <th>İşlem</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% recentOrders.forEach(order => { %>
+                                                <tr data-order="<%= order._id %>">
+                                                    <td>
+                                                        <div>
+                                                            <div style="color: var(--white); font-weight: 500;"><%= order.user.name %></div>
+                                                            <div style="color: #ccc; font-size: 0.875rem;"><%= order.user.email %></div>
+                                                        </div>
+                                                    </td>
+                                                    <td style="font-weight: 500;"><%= order.title %></td>
+                                                    <td>
+                                                        <span class="status-badge status-<%= order.status %> order-status">
+                                                            <%
+                                                                const statusText = {
+                                                                    'pending': '⏳ Beklemede',
+                                                                    'in_progress': '🚀 Üretimde',
+                                                                    'delivered': '✅ Teslim Edildi',
+                                                                    'revision': '🔄 Revizyonda',
+                                                                    'cancelled': '❌ İptal Edildi'
+                                                                };
+                                                            %>
+                                                            <%= statusText[order.status] %>
+                                                        </span>
+                                                    </td>
+                                                    <td><%= new Date(order.createdAt).toLocaleDateString('tr-TR') %></td>
+                                                    <td>
+                                                        <a href="/admin/orders/<%= order._id %>" class="btn" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+                                                            Yönet
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                                <% }); %>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                                 
                                 <div style="text-align: center; margin-top: 1rem;">
@@ -114,28 +112,27 @@
                         <% } %>
                     </div>
 
-                    <!-- Sistem Durumu -->
                     <div class="dashboard-section">
                         <h2 class="section-title">⚙️ Sistem Durumu</h2>
                         
                         <div class="card">
                             <div style="display: grid; gap: 1rem;">
-                                <div style="display: flex; justify-content: between; align-items: center;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <span>Veritabanı:</span>
                                     <span data-health="database" class="health-indicator healthy" title="Bağlantı aktif">🟢</span>
                                 </div>
                                 
-                                <div style="display: flex; justify-content: between; align-items: center;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <span>Dosya Depolama:</span>
                                     <span data-health="storage" class="health-indicator healthy" title="Depolama alanı yeterli">🟢</span>
                                 </div>
                                 
-                                <div style="display: flex; justify-content: between; align-items: center;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <span>E-posta Sistemi:</span>
                                     <span data-health="email" class="health-indicator healthy" title="E-posta servisi çalışıyor">🟢</span>
                                 </div>
                                 
-                                <div style="display: flex; justify-content: between; align-items: center;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <span>Sunucu Performansı:</span>
                                     <span data-health="performance" class="health-indicator healthy" title="Performans optimum">🟢</span>
                                 </div>
@@ -144,9 +141,7 @@
                     </div>
                 </div>
 
-                <!-- Sağ Kolon -->
                 <div class="col">
-                    <!-- Son Mesajlar -->
                     <div class="dashboard-section">
                         <h2 class="section-title">📧 Son Mesajlar</h2>
                         
@@ -155,7 +150,7 @@
                                 <div style="display: grid; gap: 1rem;">
                                     <% recentMessages.forEach(message => { %>
                                     <div style="padding: 1rem; background: var(--medium-gray); border-radius: 5px; border-left: 4px solid <%= message.isRead ? 'var(--light-gray)' : 'var(--accent)' %>;">
-                                        <div style="display: flex; justify-content: between; align-items: start; margin-bottom: 0.5rem;">
+                                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
                                             <div>
                                                 <div style="color: var(--white); font-weight: 500;"><%= message.name %></div>
                                                 <div style="color: #ccc; font-size: 0.875rem;"><%= message.email %></div>
@@ -202,7 +197,6 @@
                         <% } %>
                     </div>
 
-                    <!-- Hızlı İşlemler -->
                     <div class="dashboard-section">
                         <h2 class="section-title">🚀 Hızlı İşlemler</h2>
                         
@@ -237,28 +231,27 @@
                         </div>
                     </div>
 
-                    <!-- Sistem Bilgileri -->
                     <div class="dashboard-section">
                         <h2 class="section-title">ℹ️ Sistem Bilgileri</h2>
                         
                         <div class="card">
                             <div style="display: grid; gap: 0.75rem;">
-                                <div style="display: flex; justify-content: between;">
+                                <div style="display: flex; justify-content: space-between;">
                                     <span style="color: #ccc;">Sunucu Zamanı:</span>
                                     <span style="color: var(--white);" id="serverTime"><%= new Date().toLocaleString('tr-TR') %></span>
                                 </div>
                                 
-                                <div style="display: flex; justify-content: between;">
+                                <div style="display: flex; justify-content: space-between;">
                                     <span style="color: #ccc;">Uptime:</span>
                                     <span style="color: var(--white);">99.8%</span>
                                 </div>
                                 
-                                <div style="display: flex; justify-content: between;">
+                                <div style="display: flex; justify-content: space-between;">
                                     <span style="color: #ccc;">Son Yedekleme:</span>
                                     <span style="color: var(--white);">2 saat önce</span>
                                 </div>
                                 
-                                <div style="display: flex; justify-content: between;">
+                                <div style="display: flex; justify-content: space-between;">
                                     <span style="color: #ccc;">Versiyon:</span>
                                     <span style="color: var(--white);">v1.0.0</span>
                                 </div>

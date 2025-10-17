@@ -354,7 +354,7 @@
     // Mesajı okundu olarak işaretle
     async function markAsRead(messageId) {
         try {
-            const response = await fetch(`/messages/admin/${messageId}/read`, {
+            const response = await fetch(`/admin/messages/${messageId}/read`, { // Değişti
                 method: 'POST'
             });
             
@@ -403,7 +403,7 @@
         
         if (confirm('Bu mesajı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
             try {
-                const response = await fetch(`/messages/admin/${messageId}`, {
+                const response = await fetch(`/admin/messages/${messageId}`, { // Değişti
                     method: 'DELETE'
                 });
                 
@@ -438,7 +438,7 @@
         submitBtn.disabled = true;
         
         try {
-            const response = await fetch(`/messages/admin/${messageId}/reply`, {
+            const response = await fetch(`/admin/messages/${messageId}/reply`, { // Değişti
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

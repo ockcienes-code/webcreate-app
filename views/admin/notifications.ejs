@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bildirimler - Admin</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/animations.css">
+</head>
+<body>
+    <%- include('../partials/admin-header') %>
+    <main class="container" style="min-height: 80vh; padding: 2rem 0;">
+        <div class="animate-fade-in">
+            <h1>Tüm Sistem Bildirimleri</h1>
+            <% if (notifications.length > 0) { %>
+                <div class="card">
+                    <% notifications.forEach(notification => { %>
+                        <div class="notification-item" style="padding: 1rem; border-bottom: 1px solid var(--medium-gray);">
+                            <h4><%= notification.title %></h4>
+                            <p><%= notification.message %></p>
+                            <small>Kullanıcı: <%= notification.user.name %> | Tarih: <%= new Date(notification.createdAt).toLocaleString('tr-TR') %></small>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } else { %>
+                <p>Gösterilecek bildirim yok.</p>
+            <% } %>
+        </div>
+    </main>
+    <%- include('../partials/footer') %>
+</body>
+</html>

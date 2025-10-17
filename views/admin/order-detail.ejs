@@ -485,6 +485,30 @@
         </div>
     </div>
 
+    <div id="sendMessageModal" class="modal" style="display: none;">
+    <div class="card" style="max-width: 500px; width: 90%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 style="color: var(--white); margin: 0;">Kullanıcıya Mesaj Gönder</h3>
+            <button onclick="closeSendMessageModal()" style="background: none; border: none; color: #ccc; font-size: 1.5rem; cursor: pointer;">×</button>
+        </div>
+        <form id="sendMessageForm">
+            <input type="hidden" id="messageUserId" name="userId" value="<%= order.user._id %>">
+            <div class="form-group">
+                <label for="messageTitle" class="form-label">Başlık</label>
+                <input type="text" id="messageTitle" name="title" class="form-control" value="Siparişiniz Hakkında: <%= order.title %>" required>
+            </div>
+            <div class="form-group">
+                <label for="messageContent" class="form-label">Mesaj</label>
+                <textarea id="messageContent" name="message" class="form-control" rows="5" required></textarea>
+            </div>
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button type="button" onclick="closeSendMessageModal()" class="btn btn-outline" style="flex: 1;">İptal</button>
+                <button type="submit" class="btn" style="flex: 1;">Gönder</button>
+            </div>
+        </form>
+    </div>
+</div>
+
     <script>
     function getFileIcon(filename) {
         const ext = filename.split('.').pop().toLowerCase();
@@ -520,22 +544,63 @@
     }
 
     function sendMessageToUser() {
-        showNotification('Mesaj gönderme özelliği yakında eklenecek!', 'info');
+    document.getElementById('sendMessageModal').style.display = 'flex';
+}
+    function closeSendMessageModal() {
+    document.getElementById('sendMessageModal').style.display = 'none';
+}
+
+document.getElementById('sendMessageForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+        const response = await fetch('/admin/messages/send-to-user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        if (result.success) {
+            showNotification('Mesaj başarıyla gönderildi!', 'success');
+            closeSendMessageModal();
+        } else {
+            showNotification(result.error || 'Mesaj gönderilemedi!', 'error');
+        }
+    } catch (error) {
+        showNotification('Bir hata oluştu!', 'error');
     }
+});
 
     function previewFile(filename) {
         window.open(`/files/preview/${filename}`, '_blank');
     }
 
-    function addAdminNotes() {
-        const currentNotes = `<%= order.adminNotes || '' %>`;
-        const newNotes = prompt('Admin notlarını girin:', currentNotes);
-        
-        if (newNotes !== null) {
-            // Admin notlarını güncelleme işlemi burada yapılacak
-            showNotification('Admin notları güncellendi!', 'success');
+    async function addAdminNotes() {
+    const currentNotes = `<%= order.adminNotes || '' %>`;
+    const newNotes = prompt('Admin notlarını girin:', currentNotes);
+    
+    if (newNotes !== null) {
+        try {
+            const response = await fetch(`/admin/orders/<%= order._id %>/notes`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notes: newNotes })
+            });
+            const result = await response.json();
+            if (result.success) {
+                showNotification('Admin notları güncellendi!', 'success');
+                // Sayfayı yenilemek en kolayı
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showNotification(result.error || 'Not güncellenemedi!', 'error');
+            }
+        } catch(error) {
+            showNotification('Bir hata oluştu!', 'error');
         }
     }
+}
 
     // Revizyon işlemleri
     function acceptRevision(orderId) {
