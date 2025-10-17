@@ -10,7 +10,6 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
 </head>
 <body>
-    <!-- Header -->
     <% if (user) { %>
         <% if (user.role === 'admin') { %>
             <%- include('../partials/admin-header') %>
@@ -23,178 +22,140 @@
 
     <main class="container" style="min-height: 80vh; padding: 2rem 0;">
         <div class="animate-fade-in">
-            <div style="max-width: 800px; margin: 0 auto;">
-                <div style="text-align: center; margin-bottom: 2rem;">
-                    <h1 style="color: var(--white); margin-bottom: 0.5rem;">Yeni Web Sitesi Siparişi</h1>
-                    <p style="color: #ccc;">Web sitenizin detaylarını belirtin ve dosyalarınızı yükleyin</p>
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h1 style="color: var(--white); margin-bottom: 0.5rem;">Yeni Web Sitesi Siparişi</h1>
+                <p style="color: #ccc;">Hayalinizdeki web sitesini oluşturmak için ilk adımı atın</p>
+            </div>
+
+            <form action="/orders/create" method="POST" enctype="multipart/form-data" data-validate>
+                <div class="row" style="align-items: flex-start; gap: 2rem;">
+                    
+                    <div class="col" style="flex: 2;">
+                        <div class="card">
+                            <h3 style="color: var(--white); margin-bottom: 1.5rem;">📋 Sipariş Bilgileri</h3>
+                            <div class="form-group">
+                                <label for="title" class="form-label">Sipariş Başlığı</label>
+                                <input type="text" id="title" name="title" class="form-control" required placeholder="Örn: E-ticaret Sitesi, Blog Sitesi vb.">
+                            </div>
+                            <div class="form-group">
+                                <label for="description" class="form-label">Detaylı Açıklama</label>
+                                <textarea id="description" name="description" class="form-control" required placeholder="İstediğiniz özellikleri, sayfaları, renkleri ve diğer detayları yazın..." rows="8"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3 style="color: var(--white); margin-bottom: 1.5rem;">🎨 Tasarım Seçenekleri</h3>
+                            <div class="form-group">
+                                <label for="layout" class="form-label">Sayfa Düzeni</label>
+                                <select id="layout" name="layout" class="form-control">
+                                    <option value="modern">Modern ve Minimalist</option>
+                                    <option value="corporate">Kurumsal ve Ciddi</option>
+                                    <option value="creative">Yaratıcı ve Sanatsal</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="colorPalette" class="form-label">Renk Paleti</label>
+                                <select id="colorPalette" name="colorPalette" class="form-control">
+                                    <option value="blue">Mavi Tonları (Güvenilir)</option>
+                                    <option value="dark">Koyu Tema (Modern)</option>
+                                    <option value="light">Açık Tema (Klasik)</option>
+                                    <option value="green">Yeşil Tonları (Doğal)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <h3 style="color: var(--white); margin-bottom: 1.5rem;">📎 Dosya Yükleme</h3>
+                            <div class="file-upload" onclick="document.getElementById('files').click()">
+                                <div style="font-size: 3rem; margin-bottom: 1rem;">📁</div>
+                                <h4 style="color: var(--white);">Dosyaları Buraya Sürükleyin veya Tıklayın</h4>
+                                <input type="file" id="files" name="files" multiple style="display: none;">
+                            </div>
+                            <div id="filePreview" style="margin-top: 1rem;"></div>
+                        </div>
+                    </div>
+
+                    <div class="col" style="flex: 1; position: sticky; top: 2rem;">
+                        <div class="card">
+                            <h3 style="color: var(--white); margin-bottom: 1.5rem;">👁️ Canlı Önizleme</h3>
+                            <div id="live-preview" style="background: #fff; border-radius: 8px; padding: 10px; min-height: 400px; transition: all 0.3s ease;">
+                                <div id="preview-header" style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">
+                                    <h4 id="preview-title" style="color: #333; font-size: 1.2em;">Başlık</h4>
+                                </div>
+                                <div id="preview-content" style="padding: 20px;">
+                                    <p id="preview-description" style="color: #555; font-size: 0.9em; line-height: 1.6;">Açıklama...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <form action="/orders/create" method="POST" enctype="multipart/form-data" data-validate>
-                    <div class="card">
-                        <h3 style="color: var(--white); margin-bottom: 1.5rem;">📋 Sipariş Bilgileri</h3>
-                        
-                        <div class="form-group">
-                            <label for="title" class="form-label">Sipariş Başlığı</label>
-                            <input 
-                                type="text" 
-                                id="title" 
-                                name="title" 
-                                class="form-control" 
-                                required
-                                placeholder="Örn: E-ticaret Web Sitesi, Kurumsal Web Sitesi vb."
-                            >
-                        </div>
-
-                        <div class="form-group">
-                            <label for="description" class="form-label">Detaylı Açıklama</label>
-                            <textarea 
-                                id="description" 
-                                name="description" 
-                                class="form-control" 
-                                required
-                                placeholder="Web sitenizde olmasını istediğiniz özellikleri, sayfaları, renk tercihlerinizi, örnek siteleri ve diğer tüm detayları yazın..."
-                                rows="8"
-                            ></textarea>
-                            <small style="color: #ccc; display: block; margin-top: 0.5rem;">
-                                💡 Ne kadar detaylı açıklama yaparsanız, o kadar hızlı ve isteğinize uygun sonuç alırsınız.
-                            </small>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <h3 style="color: var(--white); margin-bottom: 1.5rem;">📎 Dosya Yükleme</h3>
-                        
-                        <div class="file-upload" onclick="document.getElementById('files').click()">
-                            <div style="font-size: 3rem; margin-bottom: 1rem;">📁</div>
-                            <h4 style="color: var(--white); margin-bottom: 0.5rem;">Dosyaları Buraya Sürükleyin veya Tıklayın</h4>
-                            <p style="color: #ccc; margin-bottom: 1rem;">
-                                ZIP, RAR, PDF, resim veya diğer desteklenen dosyaları yükleyin
-                            </p>
-                            <small style="color: #888;">
-                                Maksimum dosya boyutu: 50MB • Desteklenen formatlar: ZIP, RAR, PDF, JPG, PNG, DOC, DOCX
-                            </small>
-                            <input 
-                                type="file" 
-                                id="files" 
-                                name="files" 
-                                multiple 
-                                accept=".zip,.rar,.pdf,.jpg,.jpeg,.png,.doc,.docx"
-                                style="display: none;"
-                            >
-                        </div>
-
-                        <div id="filePreview" style="margin-top: 1rem;">
-                            <!-- Yüklenen dosyaların önizlemesi burada gösterilecek -->
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <h3 style="color: var(--white); margin-bottom: 1.5rem;">👁️ Önizleme</h3>
-                        
-                        <div style="background: var(--medium-gray); border-radius: 10px; padding: 2rem; text-align: center; border: 2px dashed var(--light-gray);">
-                            <div style="font-size: 4rem; margin-bottom: 1rem;">🌐</div>
-                            <h4 style="color: var(--white); margin-bottom: 0.5rem;">Web Sitesi Önizleme</h4>
-                            <p style="color: #ccc;">
-                                Siparişiniz oluşturulduktan sonra burada önizleme görebilirsiniz.
-                            </p>
-                            <small style="color: #888;">
-                                Önizleme, siparişiniz işleme alındıktan sonra burada görünecektir.
-                            </small>
-                        </div>
-                    </div>
-
-                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                        <a href="/user/orders" class="btn btn-outline" style="flex: 1;">
-                            ← İptal Et
-                        </a>
-                        <button type="submit" class="btn hover-lift" style="flex: 2;">
-                            🚀 Siparişi Oluştur ve Gönder
-                        </button>
-                    </div>
-                </form>
-            </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <a href="/user/orders" class="btn btn-outline" style="flex: 1;">← İptal Et</a>
+                    <button type="submit" class="btn hover-lift" style="flex: 2;">🚀 Siparişi Oluştur ve Gönder</button>
+                </div>
+            </form>
         </div>
     </main>
 
     <%- include('../partials/footer') %>
-
     <script src="/js/main.js"></script>
-    <% if (user && user.role === 'admin') { %>
-        <script src="/js/admin.js"></script>
-    <% } else if (user) { %>
-        <script src="/js/user.js"></script>
-    <% } %>
-
     <script>
-    // Dosya yükleme önizleme
-    document.getElementById('files').addEventListener('change', function(e) {
-        const preview = document.getElementById('filePreview');
-        preview.innerHTML = '';
-        
-        if (this.files.length > 0) {
-            const fileList = document.createElement('div');
-            fileList.style.cssText = 'display: grid; gap: 0.5rem;';
-            
-            Array.from(this.files).forEach((file, index) => {
-                const fileItem = document.createElement('div');
-                fileItem.style.cssText = 'display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--medium-gray); border-radius: 5px;';
-                
-                fileItem.innerHTML = `
-                    <div style="font-size: 1.5rem;">${getFileIcon(file.name)}</div>
-                    <div style="flex: 1;">
-                        <div style="color: var(--white); font-weight: 500;">${file.name}</div>
-                        <div style="color: #ccc; font-size: 0.875rem;">${formatFileSize(file.size)}</div>
-                    </div>
-                    <button type="button" onclick="removeFile(${index})" style="background: var(--danger); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer;">
-                        ×
-                    </button>
-                `;
-                
-                fileList.appendChild(fileItem);
-            });
-            
-            preview.appendChild(fileList);
-        }
-    });
+        // Form elemanlarını seç
+        const titleInput = document.getElementById('title');
+        const descriptionInput = document.getElementById('description');
+        const layoutSelect = document.getElementById('layout');
+        const colorSelect = document.getElementById('colorPalette');
 
-    function getFileIcon(filename) {
-        const ext = filename.split('.').pop().toLowerCase();
-        const icons = {
-            'zip': '📦', 'rar': '📦', 'pdf': '📄',
-            'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️',
-            'doc': '📝', 'docx': '📝'
+        // Önizleme elemanlarını seç
+        const previewTitle = document.getElementById('preview-title');
+        const previewDescription = document.getElementById('preview-description');
+        const livePreview = document.getElementById('live-preview');
+        const previewHeader = document.getElementById('preview-header');
+
+        // Renk paletleri
+        const colorPalettes = {
+            blue: { bg: '#F0F8FF', header: '#E6F2FF', title: '#005A9C', text: '#333' },
+            dark: { bg: '#2c3e50', header: '#34495e', title: '#ecf0f1', text: '#bdc3c7' },
+            light: { bg: '#ffffff', header: '#f8f9fa', title: '#212529', text: '#495057' },
+            green: { bg: '#F0FFF0', header: '#E6F8E6', title: '#2E8B57', text: '#333' }
         };
-        return icons[ext] || '📄';
-    }
 
-    function formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
+        // Güncelleme fonksiyonu
+        function updatePreview() {
+            // Başlık ve Açıklama
+            previewTitle.textContent = titleInput.value || 'Başlık';
+            previewDescription.textContent = descriptionInput.value || 'Açıklama...';
+            
+            // Renkler
+            const selectedPalette = colorPalettes[colorSelect.value];
+            livePreview.style.background = selectedPalette.bg;
+            previewHeader.style.background = selectedPalette.header;
+            previewTitle.style.color = selectedPalette.title;
+            previewDescription.style.color = selectedPalette.text;
 
-    function removeFile(index) {
-        const input = document.getElementById('files');
-        const files = Array.from(input.files);
-        files.splice(index, 1);
-        
-        // Yeni FileList oluştur
-        const newFileList = new DataTransfer();
-        files.forEach(file => newFileList.items.add(file));
-        input.files = newFileList.files;
-        
-        // Önizlemeyi güncelle
-        input.dispatchEvent(new Event('change'));
-    }
+            // Düzen
+            if (layoutSelect.value === 'corporate') {
+                livePreview.style.fontFamily = 'Georgia, serif';
+                previewTitle.style.textAlign = 'left';
+            } else if (layoutSelect.value === 'creative') {
+                livePreview.style.fontFamily = 'cursive';
+                previewTitle.style.fontStyle = 'italic';
+            } else { // Modern
+                livePreview.style.fontFamily = 'Inter, sans-serif';
+                previewTitle.style.textAlign = 'center';
+                previewTitle.style.fontStyle = 'normal';
+            }
+        }
 
-    // Form gönderme
-    document.querySelector('form').addEventListener('submit', function(e) {
-        const submitBtn = this.querySelector('button[type="submit"]');
-        submitBtn.innerHTML = '⏳ Oluşturuluyor...';
-        submitBtn.disabled = true;
-    });
+        // Event listener'ları ekle
+        titleInput.addEventListener('input', updatePreview);
+        descriptionInput.addEventListener('input', updatePreview);
+        layoutSelect.addEventListener('change', updatePreview);
+        colorSelect.addEventListener('change', updatePreview);
+
+        // İlk yüklemede çalıştır
+        updatePreview();
     </script>
 </body>
 </html>

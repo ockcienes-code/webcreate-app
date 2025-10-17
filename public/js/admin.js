@@ -8,6 +8,11 @@ document.addEventListener('DOMContentLoaded', function() {
     initMessageSystem();
 });
 
+function initAdminQuickActions() {
+    // Gelecekte hızlı aksiyonlar için (Örn: Cache temizleme, bakım modu vb.)
+    console.log('Hızlı aksiyonlar başlatıldı.');
+}
+
 // Admin dashboard
 function initAdminDashboard() {
     // Gerçek zamanlı istatistik güncelleme

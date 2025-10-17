@@ -13,8 +13,8 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  // İzin verilen dosya türleri
-  const allowedTypes = ['.zip', '.rar', '.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'];
+  // İzin verilen dosya türleri (YENİ TÜRLER EKLENDİ)
+  const allowedTypes = ['.zip', '.rar', '.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx', '.txt', '.md'];
   const fileExt = path.extname(file.originalname).toLowerCase();
   
   if (allowedTypes.includes(fileExt)) {

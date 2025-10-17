@@ -41,7 +41,7 @@ router.post('/create', requireAuth, upload.array('files', 5), async (req, res) =
       relatedOrder: order._id
     });
     await notification.save();
-
+    
     // Popup bildirimi için session'a mesaj ekle
     req.session.success_message = 'Siparişiniz başarıyla oluşturuldu ve incelenmek üzere gönderildi!';
 
@@ -51,7 +51,7 @@ router.post('/create', requireAuth, upload.array('files', 5), async (req, res) =
     console.error('Sipariş oluşturma hatası:', error);
     res.render('user/create-order', {
       title: 'Yeni Sipariş Oluştur',
-      error: 'Sipariş oluşturulurken bir hata oluştu'
+      error: 'Sipariş oluşturulurken bir hata oluştu. Lütfen tüm alanları doldurduğunuzdan emin olun.'
     });
   }
 });
